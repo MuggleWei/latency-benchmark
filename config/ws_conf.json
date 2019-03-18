@@ -1,0 +1,8 @@
+{
+	"addr": "127.0.0.1:10102",
+	"url": "/ws",
+	"loop": 100,
+	"cnt_per_loop": 10000,
+	"loop_interval_ms": 1,
+	"report_step": 5
+}

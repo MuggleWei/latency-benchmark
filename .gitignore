@@ -1,0 +1,23 @@
+# cmake directory
+build/
+
+# vim
+*~
+*.swp
+compile_commands.json
+
+# vscode
+.vscode/
+
+# python
+venv/
+__pycache__/
+
+# jetbrain
+.idea/
+/java/*.iml
+/java/target/
+
+# custom
+nohup.out
+log/
