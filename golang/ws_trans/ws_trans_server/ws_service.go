@@ -53,7 +53,7 @@ func (this *WsService) OnActive(peer *cascade.Peer) {
 func (this *WsService) OnInactive(peer *cascade.Peer) {
 	log.Printf("OnInactive: %v\n", peer.Conn.RemoteAddr().String())
 
-	file_name := "latency-golang-ws.csv"
+	file_name := "latency-ws-golang.csv"
 	f, err := os.Create(file_name)
 	if err != nil {
 		log.Printf("failed open file: %v\n", file_name)
