@@ -10,3 +10,6 @@
 [submodule "cpp/thirdparty/google/glog"]
 	path = cpp/thirdparty/google/glog
 	url = https://github.com/google/glog.git
+[submodule "cpp/thirdparty/muggleCC"]
+	path = cpp/thirdparty/muggleCC
+	url = https://github.com/MuggleWei/muggleCC.git
