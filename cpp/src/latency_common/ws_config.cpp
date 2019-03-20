@@ -34,13 +34,22 @@ bool LoadWsConfig(const char *path, WsConfig *config)
 			throw(std::runtime_error("failed parse json from config file"));
 		}
 
-		if (doc.HasMember("addr") && doc["addr"].IsString())
+		if (doc.HasMember("host") && doc["host"].IsString())
 		{
-			strncpy(config->addr, doc["addr"].GetString(), sizeof(config->addr)-1);
+			strncpy(config->host, doc["host"].GetString(), sizeof(config->host)-1);
 		}
 		else
 		{
-			throw(std::runtime_error("can't find 'addr' in config file"));
+			throw(std::runtime_error("can't find 'host' in config file"));
+		}
+
+		if (doc.HasMember("port") && doc["port"].IsInt())
+		{
+			config->loop = doc["port"].GetInt();
+		}
+		else
+		{
+			throw(std::runtime_error("can't find 'port' in config file"));
 		}
 
 		if (doc.HasMember("url") && doc["url"].IsString())

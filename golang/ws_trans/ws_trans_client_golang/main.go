@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 
 func init() {
 	log.SetOutput(&lumberjack.Logger{
-		Filename:   "./log/go_ws_trans_client.log",
+		Filename:   "./log/ws_trans_client_golang.log",
 		MaxSize:    100,   // MB
 		MaxBackups: 30,    // old files
 		MaxAge:     30,    // day
@@ -65,7 +66,7 @@ func main() {
 		return
 	}
 
-	addr := "ws://" + config.Addr + config.Url
+	addr := fmt.Sprintf("ws://%v:%v%v", config.Host, config.Port, config.Url)
 	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
 	if err != nil {
 		log.Printf("[Error] failed dial to %v: %v", addr, err.Error())

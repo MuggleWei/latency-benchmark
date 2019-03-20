@@ -133,7 +133,7 @@ void run(WsConfig *config)
 
 			exit(0);
 		}
-	}).listen(10102, [](auto *token) {
+	}).listen(config->host, config->port, [](auto *token) {
 		if (token) {
 			LOG(INFO) << "listening on port " << 10102;
 		}

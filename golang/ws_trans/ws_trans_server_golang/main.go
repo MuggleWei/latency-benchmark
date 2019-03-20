@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 
 func init() {
 	log.SetOutput(&lumberjack.Logger{
-		Filename:   "./log/go_ws_trans_server.log",
+		Filename:   "./log/ws_trans_server_golang.log",
 		MaxSize:    100,   // MB
 		MaxBackups: 30,    // old files
 		MaxAge:     30,    // day
@@ -39,8 +40,9 @@ func main() {
 		service.Hub.OnAccept(w, r)
 	})
 
+	addr := fmt.Sprintf("%v:%v", config.Host, config.Port)
 	server := &http.Server{
-		Addr:    config.Addr,
+		Addr:    addr,
 		Handler: mux,
 	}
 	err = server.ListenAndServe()

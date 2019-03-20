@@ -7,7 +7,8 @@ import (
 )
 
 type WsConfig struct {
-	Addr         string `json:"addr"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
 	Url          string `json:"url"`
 	Loop         int    `json:"loop"`
 	CntPerLoop   int    `json:"cnt_per_loop"`

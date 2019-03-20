@@ -3,7 +3,8 @@
 
 struct WsConfig
 {
-	char addr[32];
+	char host[32];
+	int port;
 	char url[128];
 	int loop;
 	int cnt_per_loop;
