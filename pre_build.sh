@@ -1,4 +1,6 @@
-:: c++ pre build
-:: vcpkg.exe install openssl:x64-windows zlib:x64-windows
+#!/bin/bash
+
+# c++ pre build
+sudo apt-get install libssl-dev
 git submodule update --init
 git submodule update --init --recursive -- cpp/thirdparty/uWebSockets/

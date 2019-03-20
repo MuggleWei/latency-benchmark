@@ -5,7 +5,7 @@ project(latency-benchmark)
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -std=c++17")
 elseif (${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Wno-missing-field-initializers")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Wno-missing-field-initializers -std=c++17")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS=1 -D_UNICODE -DUNICODE)
 	# add_definitions(-DNOMINMAX) # for fix std::max conflict in windows
@@ -31,8 +31,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC/cmake/muggle_utils.cmake)
 
 # dependencies
 find_package(Threads)
-# find_package(OpenSSL REQUIRED)
-# find_package(ZLIB REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # libuv
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv)
@@ -60,17 +60,21 @@ else()
 endif(WIN32)
 add_dependencies(uWS uv)
 target_link_libraries(uWS
+	${OPENSSL_LIBRARIES}
+	${ZLIB_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	uv
 )
 target_include_directories(uWS PUBLIC
+	${OPENSSL_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
 	${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src
 	${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src
 	${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
 )
-target_compile_options(uWS PUBLIC
-	-DLIBUS_NO_SSL -DUWS_NO_ZLIB -DLIBUS_NO_SSL -DUWS_NO_ZLIB -DLIBUS_USE_LIBUV
-)
+# target_compile_options(uWS PUBLIC
+# 	-DLIBUS_NO_SSL -DUWS_NO_ZLIB -DLIBUS_NO_SSL -DUWS_NO_ZLIB -DLIBUS_USE_LIBUV
+# )
 set_target_properties(uWS
 	PROPERTIES FOLDER "thirdparty/uWs"
 )
