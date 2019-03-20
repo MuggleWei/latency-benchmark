@@ -12,7 +12,9 @@
 
 #include "latency_common/ws_config.h"
 
-#define MAX_LEN 1000000
+#define MAX_LEN 10000000
+
+static std::array<int64_t, MAX_LEN> elapsed_array;
 
 struct PeerInfo
 {
@@ -76,7 +78,6 @@ void write_report(FILE *fp, WsConfig *config, bool sorted, std::array<int64_t, M
 
 void run(WsConfig *config)
 {
-	std::array<int64_t, MAX_LEN> elapsed_array;
 	int64_t cnt = 0;
 
 	uWS::App().ws<PeerInfo>("/ws", {
@@ -126,7 +127,7 @@ void run(WsConfig *config)
 
 			write_report_head(fp, config);
 			write_report(fp, config, false, elapsed_array, cnt);
-			std::sort(elapsed_array.begin(), elapsed_array.end());
+			std::sort(elapsed_array.begin(), elapsed_array.begin() + cnt);
 			write_report(fp, config, true, elapsed_array, cnt);
 
 			fclose(fp);
