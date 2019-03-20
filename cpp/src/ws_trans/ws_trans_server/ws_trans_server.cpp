@@ -59,7 +59,7 @@ void write_report_head(FILE *fp, WsConfig *config)
 void write_report(FILE *fp, WsConfig *config, bool sorted, std::array<int64_t, MAX_LEN> &elapsed, int64_t cnt)
 {
 	char buf[256] = {0};
-	snprintf(buf, sizeof(buf)-1, "%s,%d,%d,%d", sorted ? "true":"false", config->loop, config->cnt_per_loop, config->loop_interval_ms);
+	snprintf(buf, sizeof(buf)-1, "%s,%d,%d,%d,", sorted ? "true":"false", config->loop, config->cnt_per_loop, config->loop_interval_ms);
 	fwrite(buf, 1, strlen(buf), fp);
 
 	for (int i = 0; i < 100; i += config->report_step)
@@ -133,9 +133,9 @@ void run(WsConfig *config)
 
 			exit(0);
 		}
-	}).listen(config->host, config->port, [](auto *token) {
+	}).listen(config->host, config->port, [&](auto *token) {
 		if (token) {
-			LOG(INFO) << "listening on port " << 10102;
+			LOG(INFO) << "listen on " << config->host << ":" << config->port;
 		}
 	}).run();
 }

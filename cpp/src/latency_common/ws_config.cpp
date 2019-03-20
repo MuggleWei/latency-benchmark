@@ -45,7 +45,7 @@ bool LoadWsConfig(const char *path, WsConfig *config)
 
 		if (doc.HasMember("port") && doc["port"].IsInt())
 		{
-			config->loop = doc["port"].GetInt();
+			config->port = doc["port"].GetInt();
 		}
 		else
 		{
@@ -96,6 +96,11 @@ bool LoadWsConfig(const char *path, WsConfig *config)
 		{
 			throw(std::runtime_error("can't find 'report_step' in config file"));
 		}
+	}
+	catch (std::runtime_error e)
+	{
+		LOG(ERROR) << e.what();
+		ret = false;
 	}
 	catch (std::exception e)
 	{
