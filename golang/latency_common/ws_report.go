@@ -8,16 +8,18 @@ import (
 	"strconv"
 )
 
-func writeWsReportHead(f *os.File, config *WsConfig) {
+func writeWsReportHead(f *os.File, config *WsConfig, cnt int64) {
 	f.WriteString("sorted")
-	f.WriteString(",")
-	f.WriteString("dir")
 	f.WriteString(",")
 	f.WriteString("loop")
 	f.WriteString(",")
 	f.WriteString("cnt_per_loop")
 	f.WriteString(",")
 	f.WriteString("loop_interval_ms")
+	f.WriteString(",")
+	f.WriteString("pkg_cnt")
+	f.WriteString(",")
+	f.WriteString("dir")
 	f.WriteString(",")
 	for i := 0; i < 100; i += config.ReportStep {
 		s := strconv.Itoa(i)
@@ -29,7 +31,7 @@ func writeWsReportHead(f *os.File, config *WsConfig) {
 }
 
 func writeWsReport(f *os.File, config *WsConfig, sorted bool, elapsed []int, cnt int64) {
-	s := fmt.Sprintf("%v,%v,%v,%v,%v,", sorted, config.Loop, config.CntPerLoop, config.LoopInterval, config.Dir)
+	s := fmt.Sprintf("%v,%v,%v,%v,%v,%v,", sorted, config.Loop, config.CntPerLoop, config.LoopInterval, cnt, config.Dir)
 	f.WriteString(s)
 	for i := 0; i < 100; i += config.ReportStep {
 		idx := int64((float64(i) / 100.0) * float64(cnt))
@@ -52,7 +54,7 @@ func GenWsReport(elapsed []int, cnt int64, config *WsConfig) {
 		f.Close()
 	}()
 
-	writeWsReportHead(f, config)
+	writeWsReportHead(f, config, cnt)
 
 	writeWsReport(f, config, false, elapsed, cnt)
 
