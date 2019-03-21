@@ -14,6 +14,7 @@ type WsConfig struct {
 	CntPerLoop   int    `json:"cnt_per_loop"`
 	LoopInterval int    `json:"loop_interval_ms"`
 	ReportStep   int    `json:"report_step"`
+	Dir          string `json:"dir"`
 }
 
 func LoadWsConfig(conf_path string) (*WsConfig, error) {

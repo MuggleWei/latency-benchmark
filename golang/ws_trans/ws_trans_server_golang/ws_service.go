@@ -2,11 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
-	"sort"
-	"strconv"
 	"time"
 
 	lc "github.com/MuggleWei/latency-benchmark/golang/latency_common"
@@ -48,27 +45,45 @@ func NewWsService(config *lc.WsConfig) *WsService {
 
 func (this *WsService) OnActive(peer *cascade.Peer) {
 	log.Printf("OnActive: %v\n", peer.Conn.RemoteAddr().String())
+
+	c := peer.Conn
+
+	go func() {
+		loop_times := this.Config.Loop
+		cnt_per_time := this.Config.CntPerLoop
+		loop_interval := this.Config.LoopInterval
+
+		start_ts := time.Now()
+		for i := 0; i < loop_times; i++ {
+			for j := 0; j < cnt_per_time; j++ {
+				ts := time.Now()
+				block := lc.TimestampBlock{
+					Sec:  ts.Unix(),
+					USec: ts.Nanosecond() / 1000,
+				}
+				b, _ := json.Marshal(block)
+
+				err := c.WriteMessage(websocket.TextMessage, b)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+			}
+			time.Sleep(time.Duration(loop_interval) * time.Millisecond)
+		}
+		total_elapsed := time.Since(start_ts)
+		log.Printf("total elapsed: %v", total_elapsed)
+
+		os.Exit(0)
+	}()
 }
 
 func (this *WsService) OnInactive(peer *cascade.Peer) {
 	log.Printf("OnInactive: %v\n", peer.Conn.RemoteAddr().String())
 
-	file_name := "latency-ws-golang.csv"
-	f, err := os.Create(file_name)
-	if err != nil {
-		log.Printf("failed open file: %v\n", file_name)
+	if this.Config.Dir == "cts" {
+		lc.GenWsReport(this.Elapsed[:this.Idx], this.Idx, this.Config)
 	}
-
-	defer func() {
-		f.Close()
-	}()
-
-	this.WriteReportHead(f, this.Config)
-
-	s := this.Elapsed[:this.Idx]
-	this.WriteReport(f, this.Config, false, s, this.Idx)
-	sort.Ints(s)
-	this.WriteReport(f, this.Config, true, s, this.Idx)
 
 	os.Exit(0)
 }
@@ -91,35 +106,4 @@ func (this *WsService) OnHubByteMessage(msg *cascade.HubByteMessage) {
 }
 
 func (this *WsService) OnHubObjectMessage(*cascade.HubObjectMessage) {
-}
-
-func (this *WsService) WriteReportHead(f *os.File, config *lc.WsConfig) {
-	f.WriteString("sorted")
-	f.WriteString(",")
-	f.WriteString("loop")
-	f.WriteString(",")
-	f.WriteString("cnt_per_loop")
-	f.WriteString(",")
-	f.WriteString("loop_interval_ms")
-	f.WriteString(",")
-	for i := 0; i < 100; i += config.ReportStep {
-		s := strconv.Itoa(i)
-		f.WriteString(s)
-		f.WriteString(",")
-	}
-	f.WriteString("100")
-	f.WriteString("\n")
-}
-
-func (this *WsService) WriteReport(f *os.File, config *lc.WsConfig, sorted bool, elapsed []int, cnt int64) {
-	s := fmt.Sprintf("%v,%v,%v,%v,", sorted, config.Loop, config.CntPerLoop, config.LoopInterval)
-	f.WriteString(s)
-	for i := 0; i < 100; i += config.ReportStep {
-		idx := int64((float64(i) / 100.0) * float64(cnt))
-		val := fmt.Sprintf("%v,", elapsed[idx])
-		f.WriteString(val)
-	}
-	val := fmt.Sprintf("%v", elapsed[cnt-1])
-	f.WriteString(val)
-	f.WriteString("\n")
 }

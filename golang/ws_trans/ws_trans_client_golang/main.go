@@ -24,7 +24,7 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Lmicroseconds | log.Lshortfile)
 }
 
-func run(c *websocket.Conn, config *lc.WsConfig) {
+func run_cts(c *websocket.Conn, config *lc.WsConfig) {
 	defer func() {
 		c.Close()
 	}()
@@ -55,6 +55,34 @@ func run(c *websocket.Conn, config *lc.WsConfig) {
 
 }
 
+func run_stc(c *websocket.Conn, config *lc.WsConfig) {
+	maxLen := int64(config.Loop) * int64(config.CntPerLoop)
+	elapsed_array := make([]int, maxLen)
+	idx := int64(0)
+
+	for {
+		_, p, err := c.ReadMessage()
+		if err != nil {
+			log.Println(err.Error())
+			break
+		}
+
+		if idx > maxLen-1 {
+			break
+		}
+
+		ts := time.Now()
+		var block lc.TimestampBlock
+		json.Unmarshal(p, &block)
+
+		elapsed := int(int64(ts.Nanosecond()/1000-block.USec) + int64((ts.Unix()-block.Sec)*1000000))
+		elapsed_array[idx] = elapsed
+		idx++
+	}
+
+	lc.GenWsReport(elapsed_array[:idx], idx, config)
+}
+
 func main() {
 	config_flag := flag.String("config", "ws_conf.json", "config file path")
 	flag.Parse()
@@ -73,5 +101,11 @@ func main() {
 		return
 	}
 
-	run(c, config)
+	if config.Dir == "cts" {
+		run_cts(c, config)
+	} else if config.Dir == "stc" {
+		run_stc(c, config)
+	} else {
+		log.Printf("[Error] invalid dir")
+	}
 }
