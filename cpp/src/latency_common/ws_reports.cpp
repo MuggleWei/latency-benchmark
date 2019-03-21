@@ -60,7 +60,7 @@ void GenWsReport(int64_t *elapsed, int64_t cnt, WsConfig *config)
 
 	WriteWsReportHead(fp, config);
 	WriteWsReport(fp, config, false, elapsed, cnt);
-	std::sort(elapsed, elapsed + cnt);
+	std::sort(elapsed, elapsed + cnt, std::less<int64_t>());
 	WriteWsReport(fp, config, true, elapsed, cnt);
 
 	fclose(fp);

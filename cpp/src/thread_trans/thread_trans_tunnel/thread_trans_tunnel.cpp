@@ -1,3 +1,10 @@
+#if WIN32
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#endif
+
 #include <time.h>
 #include <chrono>
 

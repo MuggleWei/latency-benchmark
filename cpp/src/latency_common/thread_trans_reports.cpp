@@ -57,7 +57,7 @@ void GenThreadTransReport(int64_t *elapsed, int64_t cnt, ThreadTransConfig *conf
 
 	WriteThreadTransReportHead(fp, config);
 	WriteThreadTransReport(fp, config, false, elapsed, cnt, name);
-	std::sort(elapsed, elapsed + cnt);
+	std::sort(elapsed, elapsed + cnt, std::less<int64_t>());
 	WriteThreadTransReport(fp, config, false, elapsed, cnt, name);
 
 	fclose(fp);
