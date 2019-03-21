@@ -10,6 +10,7 @@ struct WsConfig
 	int cnt_per_loop;
 	int loop_interval_ms;
 	int report_step;
+	char dir[8];
 };
 
 bool LoadWsConfig(const char *path, WsConfig *config);

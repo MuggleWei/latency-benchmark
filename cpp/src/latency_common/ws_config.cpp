@@ -96,6 +96,15 @@ bool LoadWsConfig(const char *path, WsConfig *config)
 		{
 			throw(std::runtime_error("can't find 'report_step' in config file"));
 		}
+
+		if (doc.HasMember("dir") && doc["dir"].IsString())
+		{
+			strncpy(config->dir, doc["dir"].GetString(), sizeof(config->host)-1);
+		}
+		else
+		{
+			throw(std::runtime_error("can't find 'dir' in config file"));
+		}
 	}
 	catch (std::runtime_error e)
 	{

@@ -5,10 +5,13 @@
 #include <stdint.h>
 #include <array>
 #include <exception>
+#include <chrono>
 
 #include "glog/logging.h"
 #include "App.h"
 #include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 #include "latency_common/ws_config.h"
 
@@ -47,6 +50,10 @@ void write_report_head(FILE *fp, WsConfig *config)
 	fwrite(",", 1, strlen(","), fp);
 	fwrite("loop_interval_ms", 1, strlen("loop_interval_ms"), fp);
 	fwrite(",", 1, strlen(","), fp);
+	fwrite("pkg_cnt", 1, strlen("pkg_cnt"), fp);
+	fwrite(",", 1, strlen(","), fp);
+	fwrite("dir", 1, strlen("dir"), fp);
+	fwrite(",", 1, strlen(","), fp);
 	for (int i = 0; i < 100; i += config->report_step)
 	{
 		char buf[16] = {0};
@@ -61,7 +68,7 @@ void write_report_head(FILE *fp, WsConfig *config)
 void write_report(FILE *fp, WsConfig *config, bool sorted, std::array<int64_t, MAX_LEN> &elapsed, int64_t cnt)
 {
 	char buf[256] = {0};
-	snprintf(buf, sizeof(buf)-1, "%s,%d,%d,%d,", sorted ? "true":"false", config->loop, config->cnt_per_loop, config->loop_interval_ms);
+	snprintf(buf, sizeof(buf)-1, "%s,%d,%d,%d,%d,%s,", sorted ? "true":"false", config->loop, config->cnt_per_loop, config->loop_interval_ms, (int)cnt, config->dir);
 	fwrite(buf, 1, strlen(buf), fp);
 
 	for (int i = 0; i < 100; i += config->report_step)
@@ -84,7 +91,42 @@ void run(WsConfig *config)
         .compression = uWS::DISABLED,
         .maxPayloadLength = 16 * 1024,
         .idleTimeout = 120,
-        .open = [](auto *ws, auto *req){
+        .open = [&](auto *ws, auto *req){
+			if (strncmp(config->dir, "stc", 3) == 0) {
+				std::thread th([&]{
+					auto t1 = std::chrono::high_resolution_clock::now();
+
+					std::cout << "start send message\n"
+						<< "loop: " << config->loop << "\n"
+						<< "cnt_per_loop: " << config->cnt_per_loop << std::endl;
+
+					for (int i = 0; i < config->loop; ++i) {
+						for (int j = 0; j < config->cnt_per_loop; ++j) {
+							struct timeval tv;
+							gettimeofday(&tv, nullptr);
+
+							rapidjson::StringBuffer s;
+							rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+							writer.StartObject();
+							writer.Key("s");
+							writer.Int64(tv.tv_sec);
+							writer.Key("us");
+							writer.Int64(tv.tv_usec);
+							writer.EndObject();
+
+							ws->send(s.GetString(), uWS::OpCode::TEXT);
+						}
+						std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
+					}
+
+					auto t2 = std::chrono::high_resolution_clock::now();
+					std::chrono::duration<double, std::milli> total_elapsed_ms = t2 - t1;
+					LOG(INFO) << "total elapsed: " << total_elapsed_ms.count() << " ms";
+
+					ws->close();
+				});
+				th.detach();
+			}
 		},
         .message = [&](auto *ws, std::string_view message, uWS::OpCode opCode) {
 			if (cnt > MAX_LEN - 1) {
@@ -118,19 +160,23 @@ void run(WsConfig *config)
         .ping = nullptr,
         .pong = nullptr,
         .close = [&](auto *ws, int code, std::string_view message) {
-			const char *file_name = "latency-ws-cpp.csv";
-			FILE *fp = fopen(file_name, "w");
-			if (fp == nullptr)
+			if (strncmp(config->dir, "cts", 3) == 0)
 			{
-				LOG(ERROR) << "failed open csv file";
+				char file_name[64] = {0};
+				snprintf(file_name, sizeof(file_name)-1, "latency-ws-%s-cpp.csv", config->dir);
+				FILE *fp = fopen(file_name, "w");
+				if (fp == nullptr)
+				{
+					LOG(ERROR) << "failed open csv file";
+				}
+
+				write_report_head(fp, config);
+				write_report(fp, config, false, elapsed_array, cnt);
+				std::sort(elapsed_array.begin(), elapsed_array.begin() + cnt);
+				write_report(fp, config, true, elapsed_array, cnt);
+
+				fclose(fp);
 			}
-
-			write_report_head(fp, config);
-			write_report(fp, config, false, elapsed_array, cnt);
-			std::sort(elapsed_array.begin(), elapsed_array.begin() + cnt);
-			write_report(fp, config, true, elapsed_array, cnt);
-
-			fclose(fp);
 
 			exit(0);
 		}
