@@ -1,4 +1,4 @@
-#include "ws_service.h"
+#include "ws_handle.h"
 #include "glog/logging.h"
 #include "muggle/muggle_cc.h"
 #include "latency_common/ws_reports.h"
@@ -6,20 +6,17 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-WsService::WsService(WsConfig *config)
+WsHandle::WsHandle(WsConfig *config)
 	: config_(config)
 	, elapsed_array_(nullptr)
 	, cnt_(0)
 {
-	if (strncmp(config_->dir, "cts", 3) == 0)
-	{
-		max_len_ = config->loop * config->cnt_per_loop;
-		elapsed_array_ = (int64_t*)malloc(sizeof(int64_t) * max_len_);
-		cnt_ = 0;
-	}
+	max_len_ = config->loop * config->cnt_per_loop;
+	elapsed_array_ = (int64_t*)malloc(sizeof(int64_t) * max_len_);
+	cnt_ = 0;
 }
 
-WsService::~WsService()
+WsHandle::~WsHandle()
 {
 	if (elapsed_array_ != nullptr)
 	{
@@ -27,7 +24,7 @@ WsService::~WsService()
 	}
 }
 
-void WsService::onConnection(uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest &req)
+void WsHandle::onConnection(uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest &req)
 {
 	LOG(INFO) << "ws connection: " << ws->getAddress().address << ":" << ws->getAddress().port << ", url: " << req.getUrl().toString() << std::endl;
 	if (req.getUrl().toString() != config_->url)
@@ -39,7 +36,7 @@ void WsService::onConnection(uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest &
 		ws_ = ws;
 	}
 }
-void WsService::onDisconnection(uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
+void WsHandle::onDisconnection(uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
 {
 	if (strncmp(config_->dir, "cts", 3) == 0)
 	{
@@ -54,7 +51,32 @@ void WsService::onDisconnection(uWS::WebSocket<uWS::SERVER> *ws, int code, char 
 		GenWsReport(elapsed_array_, cnt_, config_);
 	}
 }
-void WsService::onMessage(uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+void WsHandle::onMessage(uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+{
+	onMessage(message, length);
+}
+
+void WsHandle::onDisconnection(uWS::WebSocket<uWS::CLIENT> *ws, int code, char *message, size_t length)
+{
+	if (strncmp(config_->dir, "stc", 3) == 0)
+	{
+		char file_name[64] = { 0 };
+		snprintf(file_name, sizeof(file_name) - 1, "latency-ws-%s-cpp.csv", config_->dir);
+		FILE *fp = fopen(file_name, "w");
+		if (fp == nullptr)
+		{
+			LOG(ERROR) << "failed open csv file";
+		}
+
+		GenWsReport(elapsed_array_, cnt_, config_);
+	}
+}
+void WsHandle::onMessage(uWS::WebSocket<uWS::CLIENT> *ws, char *message, size_t length, uWS::OpCode opCode)
+{
+	onMessage(message, length);
+}
+
+void WsHandle::onMessage(char *message, size_t length)
 {
 	if (cnt_ > max_len_ - 1)
 	{

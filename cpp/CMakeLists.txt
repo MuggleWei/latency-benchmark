@@ -156,10 +156,12 @@ endfunction(add_thread_trans)
 function(add_ws name folder)
 	file(GLOB tmp_h ${folder}/*.h)
 	file(GLOB tmp_cpp ${folder}/*.cpp)
+	file(GLOB handle_h ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_handle/*.h)
+	file(GLOB handle_pp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_handle/*.cpp)
 	if (WIN32)
-		add_executable(${name} ${tmp_h} ${tmp_cpp})
+		add_executable(${name} ${tmp_h} ${tmp_cpp} ${handle_h} ${handle_pp})
 	else()
-		add_executable(${name} ${tmp_cpp})
+		add_executable(${name} ${tmp_cpp} ${handle_pp})
 	endif(WIN32)
 	add_dependencies(${name} muggleCC glog uWS latency_common_cpp)
 	target_include_directories(${name}
@@ -180,11 +182,12 @@ endfunction(add_ws)
 
 # ws trans
 add_ws(ws_trans_server_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_server)
+add_ws(ws_trans_client_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_client)
 
 # thread trans
 add_thread_trans(thread_trans_tunnel ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_tunnel)
 
-set_target_properties(ws_trans_server_cpp thread_trans_tunnel
+set_target_properties(ws_trans_server_cpp ws_trans_client_cpp thread_trans_tunnel
 	PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
 )
 

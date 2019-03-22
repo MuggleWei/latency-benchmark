@@ -1,4 +1,3 @@
-
 #include <stdint.h>
 #include <time.h>
 #include <array>
@@ -20,7 +19,7 @@
 #endif
 
 #include "latency_common/ws_config.h"
-#include "ws_service.h"
+#include "ws_trans/ws_trans_handle/ws_handle.h"
 
 void init_glog()
 {
@@ -41,52 +40,50 @@ void init_glog()
 void run(WsConfig *config)
 {
 	uWS::Hub hub;
-	WsService service(config);
+	WsHandle handle(config);
 	
 	hub.onConnection([&](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req) {
-		service.onConnection(ws, req);
+		handle.onConnection(ws, req);
 		if (strncmp(config->dir, "stc", 3) == 0)
 		{
-			std::thread th([&] {
-				auto t1 = std::chrono::high_resolution_clock::now();
+			auto t1 = std::chrono::high_resolution_clock::now();
 
-				LOG(INFO) << "start send message\n"
-					<< "loop: " << config->loop << "\n"
-					<< "cnt_per_loop: " << config->cnt_per_loop;
+			LOG(INFO) << "start send message\n"
+				<< "loop: " << config->loop << "\n"
+				<< "cnt_per_loop: " << config->cnt_per_loop;
 
-				for (int i = 0; i < config->loop; ++i) {
-					for (int j = 0; j < config->cnt_per_loop; ++j) {
-						struct timeval tv;
-						gettimeofday(&tv, nullptr);
+			for (int i = 0; i < config->loop; ++i) {
+				for (int j = 0; j < config->cnt_per_loop; ++j) {
+					struct timeval tv;
+					gettimeofday(&tv, nullptr);
 
-						rapidjson::StringBuffer s;
-						rapidjson::Writer<rapidjson::StringBuffer> writer(s);
-						writer.StartObject();
-						writer.Key("s");
-						writer.Int64(tv.tv_sec);
-						writer.Key("us");
-						writer.Int64(tv.tv_usec);
-						writer.EndObject();
+					rapidjson::StringBuffer s;
+					rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+					writer.StartObject();
+					writer.Key("s");
+					writer.Int64(tv.tv_sec);
+					writer.Key("us");
+					writer.Int64(tv.tv_usec);
+					writer.EndObject();
 
-						ws->send(s.GetString(), s.GetSize(), uWS::OpCode::TEXT);
-					}
-					std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
+					ws->send(s.GetString(), s.GetSize(), uWS::OpCode::TEXT);
 				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
+			}
 
-				auto t2 = std::chrono::high_resolution_clock::now();
-				std::chrono::duration<double, std::milli> total_elapsed_ms = t2 - t1;
-				LOG(INFO) << "total elapsed: " << total_elapsed_ms.count() << " ms";
+			auto t2 = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double, std::milli> total_elapsed_ms = t2 - t1;
+			LOG(INFO) << "total elapsed: " << total_elapsed_ms.count() << " ms";
 
-				ws->close();
-			});
-			th.detach();
+			ws->close();
 		}
 	});
 	hub.onMessage([&](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode) {
-		service.onMessage(ws, message, length, opCode);
+		handle.onMessage(ws, message, length, opCode);
 	});
 	hub.onDisconnection([&](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length) {
-		service.onDisconnection(ws, code, message, length);
+		LOG(INFO) << "onDisconnection: " << code;
+		handle.onDisconnection(ws, code, message, length);
 		exit(0);
 	});
 
