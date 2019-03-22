@@ -1,7 +1,7 @@
 #ifndef LATENCY_BENCHMARK_WS_SERVICE_H_
 #define LATENCY_BENCHMARK_WS_SERVICE_H_
 
-#include "uWS/uWS.h"
+#include "uWS.h"
 #include "latency_common/ws_config.h"
 
 class WsService

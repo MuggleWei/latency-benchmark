@@ -46,36 +46,37 @@ func NewWsService(config *lc.WsConfig) *WsService {
 func (this *WsService) OnActive(peer *cascade.Peer) {
 	log.Printf("OnActive: %v\n", peer.Conn.RemoteAddr().String())
 
-	c := peer.Conn
+	if this.Config.Dir == "stc" {
+		c := peer.Conn
+		go func() {
+			loop_times := this.Config.Loop
+			cnt_per_time := this.Config.CntPerLoop
+			loop_interval := this.Config.LoopInterval
 
-	go func() {
-		loop_times := this.Config.Loop
-		cnt_per_time := this.Config.CntPerLoop
-		loop_interval := this.Config.LoopInterval
+			start_ts := time.Now()
+			for i := 0; i < loop_times; i++ {
+				for j := 0; j < cnt_per_time; j++ {
+					ts := time.Now()
+					block := lc.TimestampBlock{
+						Sec:  ts.Unix(),
+						USec: ts.Nanosecond() / 1000,
+					}
+					b, _ := json.Marshal(block)
 
-		start_ts := time.Now()
-		for i := 0; i < loop_times; i++ {
-			for j := 0; j < cnt_per_time; j++ {
-				ts := time.Now()
-				block := lc.TimestampBlock{
-					Sec:  ts.Unix(),
-					USec: ts.Nanosecond() / 1000,
+					err := c.WriteMessage(websocket.TextMessage, b)
+					if err != nil {
+						log.Println(err)
+						return
+					}
 				}
-				b, _ := json.Marshal(block)
-
-				err := c.WriteMessage(websocket.TextMessage, b)
-				if err != nil {
-					log.Println(err)
-					return
-				}
+				time.Sleep(time.Duration(loop_interval) * time.Millisecond)
 			}
-			time.Sleep(time.Duration(loop_interval) * time.Millisecond)
-		}
-		total_elapsed := time.Since(start_ts)
-		log.Printf("total elapsed: %v", total_elapsed)
+			total_elapsed := time.Since(start_ts)
+			log.Printf("total elapsed: %v", total_elapsed)
 
-		os.Exit(0)
-	}()
+			os.Exit(0)
+		}()
+	}
 }
 
 func (this *WsService) OnInactive(peer *cascade.Peer) {

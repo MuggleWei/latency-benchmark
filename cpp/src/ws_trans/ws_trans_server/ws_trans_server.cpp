@@ -9,7 +9,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#include "uWS/uWS.h"
+#include "uWS.h"
 #include "muggle/muggle_cc.h"
 
 #if WIN32
