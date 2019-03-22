@@ -34,9 +34,6 @@ find_package(Threads)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
 
-# options
-option(BUILD_UWS "build uWebsockets latency benchmark" OFF)
-
 # glog
 set(WITH_GFLAGS OFF CACHE BOOL "glog with gflags") 
 set(BUILD_TESTING OFF CACHE BOOL "glog build testting") 
@@ -54,6 +51,63 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC)
 set_target_properties(muggleCC
 	PROPERTIES
 	FOLDER "thirdparty/muggle"
+)
+
+# libuv
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv)
+set_target_properties(uv uv_a
+	PROPERTIES FOLDER "thirdparty/libuv"
+)
+
+# uWebSockets
+file(GLOB UWS_H ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src/*.h)
+file(GLOB UWS_CPP ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src/*.cpp)
+if (WIN32)
+	add_library(uWS SHARED
+		${UWS_H}
+		${UWS_CPP}
+	)
+else()
+	add_library(uWS SHARED
+		${UWS_CPP}
+	)
+endif(WIN32)
+add_dependencies(uWS uv)
+target_link_libraries(uWS
+	${OPENSSL_LIBRARIES}
+	${ZLIB_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT}
+	uv
+)
+target_include_directories(uWS PUBLIC
+	${OPENSSL_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
+)
+target_compile_definitions(uWS PRIVATE UWS_THREADSAFE)
+set_target_properties(uWS
+	PROPERTIES FOLDER "thirdparty/uWs"
+)
+add_custom_command(
+	TARGET uWS POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/thirdparty/uWS
+)
+foreach(uWS_Header ${UWS_H})
+	get_filename_component(uWS_Header_name ${uWS_Header} NAME)
+	add_custom_command(
+		TARGET uWS
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${uWS_Header} ${CMAKE_BINARY_DIR}/thirdparty/uWS/include/uWS/${uWS_Header_name}
+	)
+endforeach(uWS_Header ${UWS_H})
+
+set_target_properties(uWS PROPERTIES PUBLIC_HEADER "${UWS_H}")
+install(
+    TARGETS uWS
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static
+    PUBLIC_HEADER DESTINATION include/uWS
 )
 
 # latency common
@@ -98,91 +152,39 @@ function(add_thread_trans name folder)
 	target_link_libraries(${name} muggleCC glog latency_common_cpp)
 endfunction(add_thread_trans)
 
+# ws utils function
+function(add_ws name folder)
+	file(GLOB tmp_h ${folder}/*.h)
+	file(GLOB tmp_cpp ${folder}/*.cpp)
+	if (WIN32)
+		add_executable(${name} ${tmp_h} ${tmp_cpp})
+	else()
+		add_executable(${name} ${tmp_cpp})
+	endif(WIN32)
+	add_dependencies(${name} muggleCC glog uWS latency_common_cpp)
+	target_include_directories(${name}
+		PRIVATE 
+		${OPENSSL_INCLUDE_DIR}
+		${ZLIB_INCLUDE_DIR}
+		${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
+		${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src
+		${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src
+		${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
+		${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
+		${CMAKE_BINARY_DIR}/thirdparty/google/glog/
+		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
+		${CMAKE_CURRENT_LIST_DIR}/src
+	)
+	target_link_libraries(${name} muggleCC glog uWS latency_common_cpp)
+endfunction(add_ws)
+
+# ws trans
+add_ws(ws_trans_server_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_server)
+
 # thread trans
 add_thread_trans(thread_trans_tunnel ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_tunnel)
 
-set_target_properties(thread_trans_tunnel
+set_target_properties(ws_trans_server_cpp thread_trans_tunnel
 	PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
 )
 
-
-
-if(${BUILD_UWS})
-	# libuv
-	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv)
-	set_target_properties(uv uv_a
-		PROPERTIES FOLDER "thirdparty/libuv"
-	)
-	
-	# uWebSockets
-	file(GLOB uSockets_C ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src/*.c)
-	file(GLOB uSockets_eventing_C ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src/eventing/*.c)
-	file(GLOB uWebSockets_H ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src/*.h)
-	file(GLOB uWebSockets_HPP ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src/*.hpp)
-	if (WIN32)
-		add_library(uWS SHARED
-			${uSockets_C}
-			${uSockets_eventing_C}
-			${uWebSockets_H}
-			${uWebSockets_HPP}
-		)
-	else()
-		add_library(uWS SHARED
-			${uSockets_C}
-			${uSockets_eventing_C}
-		)
-	endif(WIN32)
-	add_dependencies(uWS uv)
-	target_link_libraries(uWS
-		${OPENSSL_LIBRARIES}
-		${ZLIB_LIBRARIES}
-		${CMAKE_THREAD_LIBS_INIT}
-		uv
-	)
-	target_include_directories(uWS PUBLIC
-		${OPENSSL_INCLUDE_DIR}
-		${ZLIB_INCLUDE_DIR}
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
-	)
-	# target_compile_options(uWS PUBLIC
-	# 	-DLIBUS_NO_SSL -DUWS_NO_ZLIB -DLIBUS_NO_SSL -DUWS_NO_ZLIB -DLIBUS_USE_LIBUV
-	# )
-	set_target_properties(uWS
-		PROPERTIES FOLDER "thirdparty/uWs"
-	)
-	
-	# ws utils function
-	function(add_ws name folder)
-		file(GLOB tmp_h ${folder}/*.h)
-		file(GLOB tmp_cpp ${folder}/*.cpp)
-		if (WIN32)
-			add_executable(${name} ${tmp_h} ${tmp_cpp})
-		else()
-			add_executable(${name} ${tmp_cpp})
-		endif(WIN32)
-		add_dependencies(${name} uWS glog latency_common_cpp)
-		target_include_directories(${name}
-			PRIVATE 
-			${OPENSSL_INCLUDE_DIR}
-			${ZLIB_INCLUDE_DIR}
-			${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
-			${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src
-			${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src
-			${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
-			${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
-			${CMAKE_BINARY_DIR}/thirdparty/google/glog/
-			${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
-			${CMAKE_CURRENT_LIST_DIR}/src
-		)
-		target_link_libraries(${name} uWS glog latency_common_cpp)
-	endfunction(add_ws)
-	
-	# ws server
-	add_ws(ws_trans_server_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_server)
-	
-	set_target_properties(ws_trans_server_cpp
-		PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
-	)
-endif()
