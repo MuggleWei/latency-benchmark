@@ -180,6 +180,9 @@ function(add_ws name folder)
 	target_link_libraries(${name} muggleCC glog uWS latency_common_cpp)
 endfunction(add_ws)
 
+# loop increment
+add_thread_trans(loop_increment ${CMAKE_CURRENT_LIST_DIR}/src/loop_increment)
+
 # ws trans
 add_ws(ws_trans_server_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_server)
 add_ws(ws_trans_client_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_client)
@@ -187,7 +190,7 @@ add_ws(ws_trans_client_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_clien
 # thread trans
 add_thread_trans(thread_trans_tunnel ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_tunnel)
 
-set_target_properties(ws_trans_server_cpp ws_trans_client_cpp thread_trans_tunnel
+set_target_properties(loop_increment ws_trans_server_cpp ws_trans_client_cpp thread_trans_tunnel
 	PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
 )
 
