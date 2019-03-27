@@ -45,7 +45,7 @@ func main() {
 			t := <-c
 			cur := time.Now()
 			elapsed := cur.Sub(t)
-			elapsed_array[cnt] = int(elapsed / time.Microsecond)
+			elapsed_array[cnt] = int(elapsed)
 			cnt++
 			if cnt >= max_len {
 				break

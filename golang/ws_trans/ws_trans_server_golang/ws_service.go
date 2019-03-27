@@ -59,7 +59,7 @@ func (this *WsService) OnActive(peer *cascade.Peer) {
 					ts := time.Now()
 					block := lc.TimestampBlock{
 						Sec:  ts.Unix(),
-						USec: ts.Nanosecond() / 1000,
+						NSec: ts.Nanosecond(),
 					}
 					b, _ := json.Marshal(block)
 
@@ -98,7 +98,7 @@ func (this *WsService) OnRead(peer *cascade.Peer, message []byte) {
 	var block lc.TimestampBlock
 	json.Unmarshal(message, &block)
 
-	elapsed := int(int64(ts.Nanosecond()/1000-block.USec) + int64((ts.Unix()-block.Sec)*1000000))
+	elapsed := int(int64(ts.Nanosecond()-block.NSec) + int64((ts.Unix()-block.Sec)*int64(time.Second)))
 	this.Elapsed[this.Idx] = elapsed
 	this.Idx++
 }
