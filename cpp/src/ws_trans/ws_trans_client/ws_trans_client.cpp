@@ -70,16 +70,16 @@ void run_cts(WsConfig *config)
 
 		for (int i = 0; i < config->loop; ++i) {
 			for (int j = 0; j < config->cnt_per_loop; ++j) {
-				struct timeval tv;
-				gettimeofday(&tv, nullptr);
+				struct timespec ts;
+				timespec_get(&ts, TIME_UTC);
 
 				rapidjson::StringBuffer s;
 				rapidjson::Writer<rapidjson::StringBuffer> writer(s);
 				writer.StartObject();
 				writer.Key("s");
-				writer.Int64(tv.tv_sec);
-				writer.Key("us");
-				writer.Int64(tv.tv_usec);
+				writer.Int64(ts.tv_sec);
+				writer.Key("ns");
+				writer.Int64(ts.tv_nsec);
 				writer.EndObject();
 
 				ws->send(s.GetString(), s.GetSize(), uWS::OpCode::TEXT);
@@ -88,7 +88,7 @@ void run_cts(WsConfig *config)
 		}
 
 		auto t2 = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double, std::milli> total_elapsed_ms = t2 - t1;
+		std::chrono::duration<double, std::micro> total_elapsed_ms = t2 - t1;
 		LOG(INFO) << "total elapsed: " << total_elapsed_ms.count() << " ms";
 
 		hub.getDefaultGroup<uWS::CLIENT>().close();

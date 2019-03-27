@@ -30,10 +30,10 @@ void init_glog()
 	google::InitGoogleLogging("");
 }
 
-void fn_consumer(int64_t *elapsed_array, ThreadTransConfig *config, muggle::Tunnel<struct timeval> &tunnel)
+void fn_consumer(int64_t *elapsed_array, ThreadTransConfig *config, muggle::Tunnel<struct timespec> &tunnel)
 {
-	std::queue<struct timeval> queue;
-	struct timeval cur;
+	std::queue<struct timespec> queue;
+	struct timespec cur;
 	int64_t cnt = config->loop * config->cnt_per_loop;
 	int64_t idx = 0;
 	while (true)
@@ -41,9 +41,9 @@ void fn_consumer(int64_t *elapsed_array, ThreadTransConfig *config, muggle::Tunn
 		tunnel.Read(queue);
 		while (queue.size() > 0)
 		{
-			gettimeofday(&cur, nullptr);
-			struct timeval &tv = queue.front();
-			int64_t elapsed = (cur.tv_sec - tv.tv_sec) * 1000000 + cur.tv_usec - tv.tv_usec;
+			timespec_get(&cur, TIME_UTC);
+			struct timespec &ts = queue.front();
+			int64_t elapsed = (cur.tv_sec - ts.tv_sec) * 1000000000 + cur.tv_nsec - ts.tv_nsec;
 			if (idx >= cnt)
 			{
 				LOG(INFO) << "fuck";
@@ -60,15 +60,15 @@ void fn_consumer(int64_t *elapsed_array, ThreadTransConfig *config, muggle::Tunn
 	}
 }
 
-void fn_producer(ThreadTransConfig *config, muggle::Tunnel<struct timeval> &tunnel)
+void fn_producer(ThreadTransConfig *config, muggle::Tunnel<struct timespec> &tunnel)
 {
-	struct timeval tv;
+	struct timespec ts;
 	for (int64_t i = 0; i < config->loop; ++i)
 	{
 		for (int64_t j = 0; j < config->cnt_per_loop; ++j)
 		{
-			gettimeofday(&tv, nullptr);
-			tunnel.Write(tv);
+			timespec_get(&ts, TIME_UTC);
+			tunnel.Write(ts);
 		}
 		std::this_thread::sleep_for(std::chrono::microseconds(config->loop_interval_ms));
 	}
@@ -76,7 +76,7 @@ void fn_producer(ThreadTransConfig *config, muggle::Tunnel<struct timeval> &tunn
 
 void run(ThreadTransConfig *config)
 {
-	muggle::Tunnel<struct timeval> tunnel;
+	muggle::Tunnel<struct timespec> tunnel;
 	int64_t cnt = config->loop * config->cnt_per_loop;
 	int64_t *elapsed_array = (int64_t*)malloc(sizeof(int64_t) * cnt);
 

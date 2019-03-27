@@ -54,16 +54,16 @@ void run(WsConfig *config)
 
 			for (int i = 0; i < config->loop; ++i) {
 				for (int j = 0; j < config->cnt_per_loop; ++j) {
-					struct timeval tv;
-					gettimeofday(&tv, nullptr);
+					struct timespec ts;
+					timespec_get(&ts, TIME_UTC);
 
 					rapidjson::StringBuffer s;
 					rapidjson::Writer<rapidjson::StringBuffer> writer(s);
 					writer.StartObject();
 					writer.Key("s");
-					writer.Int64(tv.tv_sec);
-					writer.Key("us");
-					writer.Int64(tv.tv_usec);
+					writer.Int64(ts.tv_sec);
+					writer.Key("ns");
+					writer.Int64(ts.tv_nsec);
 					writer.EndObject();
 
 					ws->send(s.GetString(), s.GetSize(), uWS::OpCode::TEXT);

@@ -83,8 +83,8 @@ void WsHandle::onMessage(char *message, size_t length)
 		return;
 	}
 
-	struct timeval tv;
-	gettimeofday(&tv, nullptr);
+	struct timespec ts;
+	timespec_get(&ts, TIME_UTC);
 
 	try
 	{
@@ -97,8 +97,8 @@ void WsHandle::onMessage(char *message, size_t length)
 		}
 
 		int64_t s = doc["s"].GetInt64();
-		int64_t us = doc["us"].GetInt64();
-		int64_t elapsed = (tv.tv_sec - s) * 1000000 + tv.tv_usec - us;
+		int64_t ns = doc["ns"].GetInt64();
+		int64_t elapsed = (ts.tv_sec - s) * 1000000000 + ts.tv_nsec - ns;
 		elapsed_array_[cnt_++] = elapsed;
 	}
 	catch (std::exception &e)
