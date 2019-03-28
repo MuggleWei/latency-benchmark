@@ -2,5 +2,7 @@
 	"loop": 100,
 	"cnt_per_loop": 10000,
 	"loop_interval_ms": 1,
-	"report_step": 5
+	"report_step": 5,
+	"single_thread_write": 1,
+	"spin_read": 1
 }

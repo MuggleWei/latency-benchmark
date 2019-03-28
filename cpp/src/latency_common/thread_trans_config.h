@@ -7,6 +7,8 @@ struct ThreadTransConfig
 	int cnt_per_loop;
 	int loop_interval_ms;
 	int report_step;
+	int single_thread_write;
+	int spin_read;
 };
 
 bool LoadThreadTransConfig(const char *path, ThreadTransConfig *config);

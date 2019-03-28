@@ -189,6 +189,7 @@ add_ws(ws_trans_client_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_clien
 
 # thread trans
 add_thread_trans(thread_trans_tunnel ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_tunnel)
+add_thread_trans(thread_trans_ringbuffer ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_ringbuffer)
 
 set_target_properties(loop_increment ws_trans_server_cpp ws_trans_client_cpp thread_trans_tunnel
 	PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"

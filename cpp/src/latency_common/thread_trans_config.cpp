@@ -70,6 +70,24 @@ bool LoadThreadTransConfig(const char *path, ThreadTransConfig *config)
 		{
 			throw(std::runtime_error("can't find 'report_step' in config file"));
 		}
+
+		if (doc.HasMember("single_thread_write") && doc["single_thread_write"].IsInt())
+		{
+			config->single_thread_write = doc["single_thread_write"].GetInt();
+		}
+		else
+		{
+			throw(std::runtime_error("can't find 'single_thread_write' in config file"));
+		}
+
+		if (doc.HasMember("spin_read") && doc["spin_read"].IsInt())
+		{
+			config->spin_read = doc["spin_read"].GetInt();
+		}
+		else
+		{
+			throw(std::runtime_error("can't find 'spin_read' in config file"));
+		}
 	}
 	catch (std::runtime_error e)
 	{
