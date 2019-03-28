@@ -1,3 +1,10 @@
+#if WIN32
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#endif
+
 #include "glog/logging.h"
 #include "muggle/muggle_cc.h"
 
