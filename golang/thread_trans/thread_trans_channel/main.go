@@ -55,9 +55,13 @@ func main() {
 	}()
 
 	for i := 0; i < config.Loop; i++ {
+		ts_start := time.Now()
 		for j := 0; j < config.CntPerLoop; j++ {
 			c <- time.Now()
 		}
+		ts_end := time.Now()
+		elapsed := ts_end.Sub(ts_start)
+		log.Printf("write %v use time %v ns\n", config.CntPerLoop, int64(elapsed))
 		time.Sleep(time.Millisecond * time.Duration(config.LoopInterval))
 	}
 
