@@ -103,14 +103,20 @@ void fn_producer(ThreadTransConfig *config, MuggleRingBuffer *ring_buf)
 	}
 
 	Package pkg;
+	struct timespec ts_start, ts_end;
+	int64_t elapsed;
 	for (int64_t i = 0; i < config->loop; ++i)
 	{
+		timespec_get(&ts_start, TIME_UTC);
 		for (int64_t j = 0; j < config->cnt_per_loop; ++j)
 		{
 			pkg.idx = i * config->cnt_per_loop + j;
 			timespec_get(&pkg.ts, TIME_UTC);
 			(*fn)(ring_buf, &pkg, sizeof(pkg));
 		}
+		timespec_get(&ts_end, TIME_UTC);
+		elapsed = (ts_end.tv_sec - ts_start.tv_sec) * 1000000000 + ts_end.tv_nsec - ts_start.tv_nsec;
+		LOG(INFO) << "write " << config->cnt_per_loop << " use time " << elapsed << " ns";
 		std::this_thread::sleep_for(std::chrono::microseconds(config->loop_interval_ms));
 	}
 
