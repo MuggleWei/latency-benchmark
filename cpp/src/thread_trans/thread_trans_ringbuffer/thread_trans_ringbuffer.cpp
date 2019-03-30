@@ -133,8 +133,6 @@ void run(ThreadTransConfig *config)
 	int64_t *elapsed_array = (int64_t*)malloc(sizeof(int64_t) * cnt);
 
 	std::thread consumer(fn_consumer, elapsed_array, config, ring_buf);
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-
 	std::thread producer(fn_producer, config, ring_buf);
 	consumer.join();
 	producer.join();
