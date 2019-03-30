@@ -70,7 +70,7 @@ void fn_producer(ThreadTransConfig *config, muggle::Tunnel<struct timespec> &tun
 			timespec_get(&ts, TIME_UTC);
 			tunnel.Write(ts);
 		}
-		std::this_thread::sleep_for(std::chrono::microseconds(config->loop_interval_ms));
+		std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
 	}
 }
 

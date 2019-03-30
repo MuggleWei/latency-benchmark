@@ -118,7 +118,7 @@ void fn_producer(ThreadTransConfig *config, MuggleRingBuffer *ring_buf)
 		timespec_get(&ts_end, TIME_UTC);
 		elapsed = (ts_end.tv_sec - ts_start.tv_sec) * 1000000000 + ts_end.tv_nsec - ts_start.tv_nsec;
 		LOG(INFO) << "write " << config->cnt_per_loop << " use time " << elapsed << " ns";
-		std::this_thread::sleep_for(std::chrono::microseconds(config->loop_interval_ms));
+		std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
 	}
 
 	LOG(INFO) << "producer exit...";
