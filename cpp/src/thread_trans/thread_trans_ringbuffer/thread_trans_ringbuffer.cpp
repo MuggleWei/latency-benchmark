@@ -12,18 +12,18 @@
 #include "latency_common/thread_trans_reports.h"
 
 typedef bool (*fn_write)(MuggleRingBuffer *ring_buffer, void *data, size_t len);
-typedef void* (*fn_read)(MuggleRingBuffer *ring_buffer, int64_t idx);
+typedef void* (*fn_read)(MuggleRingBuffer *ring_buffer, int idx);
 
 struct Package
 {
-	int64_t idx;
+	int idx;
 	struct timespec ts;
 };
 
 struct MissingPkg
 {
-	int64_t idx;
-	int64_t cursor;
+	int idx;
+	int cursor;
 };
 
 void init_glog()
@@ -44,22 +44,23 @@ void init_glog()
 
 void fn_consumer(int64_t *elapsed_array, ThreadTransConfig *config, MuggleRingBuffer *ring_buf)
 {
-	fn_read fn = nullptr;
-	if (config->spin_read)
-	{
-		fn = MuggleRingBufferSpinRead;
-	}
-	else
-	{
-		fn = MuggleRingBufferYieldRead;
-	}
+	// fn_read fn = nullptr;
+	// if (config->spin_read)
+	// {
+	// 	fn = MuggleRingBufferSpinRead;
+	// }
+	// else
+	// {
+	// 	fn = MuggleRingBufferYieldRead;
+	// }
+	fn_read fn = MuggleRingBufferRead;
 
-	int64_t cnt = config->loop * config->cnt_per_loop;
+	int cnt = config->loop * config->cnt_per_loop;
 	MissingPkg *missing_pkg_array = (MissingPkg*)malloc(sizeof(MissingPkg) * (1 + cnt / ring_buf->capacity));
 	int64_t missing_idx = 0;
 
 	struct timespec cur;
-	int64_t idx = 0;
+	int idx = 0;
 	while (true)
 	{
 		Package *pkg = (Package*)(*fn)(ring_buf, idx);
@@ -105,10 +106,10 @@ void fn_producer(ThreadTransConfig *config, MuggleRingBuffer *ring_buf)
 	Package pkg;
 	struct timespec ts_start, ts_end;
 	int64_t elapsed;
-	for (int64_t i = 0; i < config->loop; ++i)
+	for (int i = 0; i < config->loop; ++i)
 	{
 		timespec_get(&ts_start, TIME_UTC);
-		for (int64_t j = 0; j < config->cnt_per_loop; ++j)
+		for (int j = 0; j < config->cnt_per_loop; ++j)
 		{
 			pkg.idx = i * config->cnt_per_loop + j;
 			timespec_get(&pkg.ts, TIME_UTC);
@@ -128,7 +129,7 @@ void run(ThreadTransConfig *config)
 	MuggleRingBuffer *ring_buf = (MuggleRingBuffer*)malloc(sizeof(MuggleRingBuffer));
 	MuggleRingBufferInit(ring_buf, config->cnt_per_loop * 5, sizeof(Package));
 
-	int64_t cnt = config->loop * config->cnt_per_loop;
+	int cnt = config->loop * config->cnt_per_loop;
 	int64_t *elapsed_array = (int64_t*)malloc(sizeof(int64_t) * cnt);
 
 	std::thread consumer(fn_consumer, elapsed_array, config, ring_buf);
