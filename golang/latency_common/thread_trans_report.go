@@ -2,22 +2,19 @@ package latency_common
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
 )
 
-func writeThreadTransReportHead(f *os.File, config *ThreadTransConfig, cnt int64) {
-	f.WriteString("sorted")
+func GenThreadLantencyReportsHead(f *os.File, config *ThreadTransConfig) {
+	f.WriteString("case_name")
 	f.WriteString(",")
 	f.WriteString("loop")
 	f.WriteString(",")
-	f.WriteString("cnt_per_loop")
+	f.WriteString("cnt_per_loog")
 	f.WriteString(",")
 	f.WriteString("loop_interval_ms")
-	f.WriteString(",")
-	f.WriteString("pkg_cnt")
 	f.WriteString(",")
 	for i := 0; i < 100; i += config.ReportStep {
 		s := strconv.Itoa(i)
@@ -28,34 +25,32 @@ func writeThreadTransReportHead(f *os.File, config *ThreadTransConfig, cnt int64
 	f.WriteString("\n")
 }
 
-func writeThreadTransReport(f *os.File, config *ThreadTransConfig, sorted bool, elapsed []int, cnt int64) {
-	s := fmt.Sprintf("%v,%v,%v,%v,%v,", sorted, config.Loop, config.CntPerLoop, config.LoopInterval, cnt)
+func GenThreadLantencyReportsBody(
+	f *os.File,
+	config ThreadTransConfig,
+	blocks []LatencyBlock,
+	caseName string,
+	cnt, ts_begin_idx, ts_end_idx uint64,
+	need_sort bool,
+) {
+	elapseds := make([]int, cnt)
+	var i uint64
+	for i = 0; i < cnt; i++ {
+		elapseds[i] = int(blocks[i].Ts[ts_end_idx].Sub(blocks[i].Ts[ts_begin_idx]))
+	}
+
+	if need_sort {
+		sort.Ints(elapseds)
+	}
+
+	s := fmt.Sprintf("%v,%v,%v,%v,", caseName, config.Loop, config.CntPerLoop, config.LoopInterval)
 	f.WriteString(s)
 	for i := 0; i < 100; i += config.ReportStep {
 		idx := int64((float64(i) / 100.0) * float64(cnt))
-		val := fmt.Sprintf("%v,", elapsed[idx])
+		val := fmt.Sprintf("%v,", elapseds[idx])
 		f.WriteString(val)
 	}
-	val := fmt.Sprintf("%v", elapsed[cnt-1])
+	val := fmt.Sprintf("%v", elapseds[cnt-1])
 	f.WriteString(val)
 	f.WriteString("\n")
-}
-
-func GenThreadTransReport(elapsed []int, cnt int64, config *ThreadTransConfig, name string) {
-	file_name := "latency-threadtrans-" + name + "-golang.csv"
-	f, err := os.Create(file_name)
-	if err != nil {
-		log.Printf("failed open file: %v\n", file_name)
-	}
-
-	defer func() {
-		f.Close()
-	}()
-
-	writeThreadTransReportHead(f, config, cnt)
-
-	writeThreadTransReport(f, config, false, elapsed, cnt)
-
-	sort.Ints(elapsed)
-	writeThreadTransReport(f, config, true, elapsed, cnt)
 }
