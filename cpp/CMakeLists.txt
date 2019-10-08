@@ -48,7 +48,7 @@ set(MUGGLE_BUILD_EXAMPLE OFF)
 set(MUGGLE_BUILD_TEST OFF)
 set(MUGGLE_BUILD_BENCHMARK OFF)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC)
-set_target_properties(muggleCC
+set_target_properties(muggleCC muggle_benchmark
 	PROPERTIES
 	FOLDER "thirdparty/muggle"
 )
