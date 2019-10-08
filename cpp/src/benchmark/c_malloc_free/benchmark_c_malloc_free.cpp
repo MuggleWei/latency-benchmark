@@ -133,16 +133,16 @@ void Benchmark_wr(FILE *fp, muggle::BenchmarkConfig &config, int cnt_producer, i
 	}
 	free(consumer_read_num);
 
-	snprintf(buf, sizeof(buf) - 1, "%dw%dr-sowr-alloc", cnt_producer, cnt_consumer);
+	snprintf(buf, sizeof(buf) - 1, "%dw%dr-c-alloc", cnt_producer, cnt_consumer);
 	muggle::GenLatencyReportsBody(fp, &config, blocks, buf, cnt, 0, 1, 0);
 
-	snprintf(buf, sizeof(buf) - 1, "%dw%dr-sowr-alloc-sorted", cnt_producer, cnt_consumer);
+	snprintf(buf, sizeof(buf) - 1, "%dw%dr-c-alloc-sorted", cnt_producer, cnt_consumer);
 	muggle::GenLatencyReportsBody(fp, &config, blocks, buf, cnt, 0, 1, 1);
 
-	snprintf(buf, sizeof(buf) - 1, "%dw%dr-sowr-free", cnt_producer, cnt_consumer);
+	snprintf(buf, sizeof(buf) - 1, "%dw%dr-c-free", cnt_producer, cnt_consumer);
 	muggle::GenLatencyReportsBody(fp, &config, blocks, buf, cnt, 2, 3, 0);
 
-	snprintf(buf, sizeof(buf) - 1, "%dw%dr-sowr-free-sorted", cnt_producer, cnt_consumer);
+	snprintf(buf, sizeof(buf) - 1, "%dw%dr-c-free-sorted", cnt_producer, cnt_consumer);
 	muggle::GenLatencyReportsBody(fp, &config, blocks, buf, cnt, 2, 3, 1);
 
 	free(blocks);
