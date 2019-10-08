@@ -131,27 +131,32 @@ target_include_directories(latency_common_cpp
 	${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-# thread trans utils function
-# function(add_latency_benchmark name folder)
-# 	file(GLOB tmp_h ${folder}/*.h)
-# 	file(GLOB tmp_cpp ${folder}/*.cpp)
-# 	if (WIN32)
-# 		add_executable(${name} ${tmp_h} ${tmp_cpp})
-# 	else()
-# 		add_executable(${name} ${tmp_cpp})
-# 	endif(WIN32)
-# 	add_dependencies(${name} muggleCC glog latency_common_cpp)
-# 	target_include_directories(${name}
-# 		PRIVATE 
-# 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
-# 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
-# 		${CMAKE_BINARY_DIR}/thirdparty/google/glog/
-# 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
-# 		${CMAKE_CURRENT_LIST_DIR}/src
-# 	)
-# 	target_link_libraries(${name} muggleCC glog latency_common_cpp)
-# endfunction(add_latency_benchmark)
-# 
+# benchmark config
+file(GLOB benchmark_common_H ${CMAKE_CURRENT_LIST_DIR}/src/benchmark_common/*.h)
+file(GLOB benchmark_common_CPP ${CMAKE_CURRENT_LIST_DIR}/src/benchmark_common/*.cpp)
+if (WIN32)
+	add_library(benchmark_common_cpp STATIC
+		${benchmark_common_H}
+		${benchmark_common_CPP}
+	)
+else()
+	add_library(benchmark_common_cpp STATIC
+		${benchmark_common_CPP}
+	)
+endif()
+target_include_directories(benchmark_common_cpp
+	PUBLIC 
+	${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
+	${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
+	${CMAKE_CURRENT_LIST_DIR}/src
+)
+add_dependencies(benchmark_common_cpp muggleCC muggle_benchmark)
+target_link_libraries(benchmark_common_cpp
+	muggleCC
+	muggle_benchmark
+)
+
+# benchmark utils function
 function(add_benchmark name folder)
 	message("add benchmark ${name} ${folder}")
 	
@@ -180,12 +185,8 @@ function(add_benchmark name folder)
 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
 		${CMAKE_CURRENT_LIST_DIR}/src
 	)
-	add_dependencies(${name} muggleCC muggle_benchmark glog)
-	target_link_libraries(${name}
-		muggleCC
-		muggle_benchmark
-		glog
-	)
+	add_dependencies(${name} benchmark_common_cpp)
+	target_link_libraries(${name} benchmark_common_cpp)
 endfunction()
 
 
@@ -216,9 +217,6 @@ function(add_ws name folder)
 	)
 	target_link_libraries(${name} muggleCC glog uWS latency_common_cpp)
 endfunction(add_ws)
-
-# # loop increment
-# add_benchmark(loop_increment ${CMAKE_CURRENT_LIST_DIR}/src/loop_increment)
 
 # benchmark
 if (NOT ${MUGGLE_BUILD_ONLY_C})

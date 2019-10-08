@@ -1,0 +1,6 @@
+{
+	"loop": 50,
+	"cnt_per_loop": 20000,
+	"loop_interval_ms": 10,
+	"report_step": 10
+}

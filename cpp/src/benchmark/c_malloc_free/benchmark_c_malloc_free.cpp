@@ -5,10 +5,11 @@
  *	found in the LICENSE file.
  */
 
-#include "muggle_benchmark/muggle_benchmark.h"
 #include <stdio.h>
 #include <thread>
 #include <chrono>
+#include "muggle_benchmark/muggle_benchmark.h"
+#include "benchmark_common/benchmark_config.h"
 
 uint64_t *consumer_read_num = nullptr;
 
@@ -150,13 +151,16 @@ void Benchmark_wr(FILE *fp, muggle::BenchmarkConfig &config, int cnt_producer, i
 
 int main()
 {
+	// load config
 	muggle::BenchmarkConfig config;
+	bool ret = load_benchmark_config("benchmark_conf.json", &config);
+	if (!ret)
+	{
+		return 1;
+	}
 	strncpy(config.name, "c_malloc_free", sizeof(config.name)-1);
-	config.loop = 50;
-	config.cnt_per_loop = 20000;
-	config.loop_interval_ms = 10;
-	config.report_step = 10;
 
+	// create report csv
 	char file_name[128];
 	snprintf(file_name, sizeof(file_name)-1, "benchmark_%s.csv", config.name);
 	FILE *fp = fopen(file_name, "wb");
@@ -166,8 +170,10 @@ int main()
 		exit(1);
 	}
 
+	// write head
 	muggle::GenLatencyReportsHead(fp, &config);
 
+	// benchmark
 	int hc = (int)std::thread::hardware_concurrency();
 	printf("hardware_concurrency: %d\n", hc);
 
