@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <thread>
 #include <chrono>
-#include "muggle_benchmark/muggle_benchmark.h"
 #include "benchmark_common/benchmark_config.h"
 
 uint64_t *consumer_read_num = nullptr;
@@ -45,7 +44,10 @@ void fn_producer(
 			block->idx = idx;
 			muggle_ringbuffer_write(ring, block);
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
+		if (config->loop_interval_ms > 0)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
+		}
 	}
 }
 
@@ -189,4 +191,6 @@ int main()
 	Benchmark_wr(fp, config, 2 * hc, 1, flag);
 
 	fclose(fp);
+
+	return 0;
 }
