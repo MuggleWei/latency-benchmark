@@ -69,7 +69,7 @@ void run_cas(int64_t cnt)
 	{
 		do {
 			tmp = g_v_tmp;
-		} while (MUGGLE_ATOMIC_CAS_64(g_v_tmp, tmp, tmp+1) != tmp);
+		} while (muggle_atomic_cmp_exch_strong64(&g_v_tmp, &tmp, tmp+1, muggle_memory_order_relaxed) != tmp);
 	}
 	timespec_get(&end_ts, TIME_UTC);
 	elapsed = (int64_t)(end_ts.tv_sec - start_ts.tv_sec) * 1000000000 + int64_t(end_ts.tv_nsec - start_ts.tv_nsec);

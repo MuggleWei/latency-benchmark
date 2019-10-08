@@ -132,15 +132,46 @@ target_include_directories(latency_common_cpp
 )
 
 # thread trans utils function
-function(add_thread_trans name folder)
+# function(add_latency_benchmark name folder)
+# 	file(GLOB tmp_h ${folder}/*.h)
+# 	file(GLOB tmp_cpp ${folder}/*.cpp)
+# 	if (WIN32)
+# 		add_executable(${name} ${tmp_h} ${tmp_cpp})
+# 	else()
+# 		add_executable(${name} ${tmp_cpp})
+# 	endif(WIN32)
+# 	add_dependencies(${name} muggleCC glog latency_common_cpp)
+# 	target_include_directories(${name}
+# 		PRIVATE 
+# 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
+# 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
+# 		${CMAKE_BINARY_DIR}/thirdparty/google/glog/
+# 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
+# 		${CMAKE_CURRENT_LIST_DIR}/src
+# 	)
+# 	target_link_libraries(${name} muggleCC glog latency_common_cpp)
+# endfunction(add_latency_benchmark)
+# 
+function(add_benchmark name folder)
+	message("add benchmark ${name} ${folder}")
+	
+	set(name benchmark_${name})
+
 	file(GLOB tmp_h ${folder}/*.h)
+	file(GLOB tmp_c ${folder}/*.c)
 	file(GLOB tmp_cpp ${folder}/*.cpp)
+	file(GLOB tmp_cc ${folder}/*.cc)
+
 	if (WIN32)
-		add_executable(${name} ${tmp_h} ${tmp_cpp})
+		add_executable(${name} ${tmp_h} ${tmp_c} ${tmp_cpp} ${tmp_cc})
+		set_target_properties(${name}
+			PROPERTIES
+			FOLDER "benchmark"
+			VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+		)
 	else()
-		add_executable(${name} ${tmp_cpp})
+		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
 	endif(WIN32)
-	add_dependencies(${name} muggleCC glog latency_common_cpp)
 	target_include_directories(${name}
 		PRIVATE 
 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
@@ -149,8 +180,14 @@ function(add_thread_trans name folder)
 		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
 		${CMAKE_CURRENT_LIST_DIR}/src
 	)
-	target_link_libraries(${name} muggleCC glog latency_common_cpp)
-endfunction(add_thread_trans)
+	add_dependencies(${name} muggleCC muggle_benchmark glog)
+	target_link_libraries(${name}
+		muggleCC
+		muggle_benchmark
+		glog
+	)
+endfunction()
+
 
 # ws utils function
 function(add_ws name folder)
@@ -180,18 +217,21 @@ function(add_ws name folder)
 	target_link_libraries(${name} muggleCC glog uWS latency_common_cpp)
 endfunction(add_ws)
 
-# loop increment
-add_thread_trans(loop_increment ${CMAKE_CURRENT_LIST_DIR}/src/loop_increment)
+# # loop increment
+# add_benchmark(loop_increment ${CMAKE_CURRENT_LIST_DIR}/src/loop_increment)
+
+# benchmark
+if (NOT ${MUGGLE_BUILD_ONLY_C})
+	SUBDIRLIST(benchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/src/benchmark)
+	FOREACH(subdir ${benchmark_root_dir})
+		add_benchmark(${subdir} ${CMAKE_CURRENT_LIST_DIR}/src/benchmark/${subdir})
+	ENDFOREACH()
+endif()
 
 # ws trans
 add_ws(ws_trans_server_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_server)
 add_ws(ws_trans_client_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_client)
-
-# thread trans
-add_thread_trans(thread_trans_tunnel ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_tunnel)
-add_thread_trans(thread_trans_ringbuffer ${CMAKE_CURRENT_LIST_DIR}/src/thread_trans/thread_trans_ringbuffer)
-
-set_target_properties(loop_increment ws_trans_server_cpp ws_trans_client_cpp thread_trans_tunnel
+set_target_properties(ws_trans_server_cpp ws_trans_client_cpp
 	PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
 )
 
