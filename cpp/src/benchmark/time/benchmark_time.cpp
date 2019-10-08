@@ -99,6 +99,41 @@ void benchmark_gettimeofday(FILE *fp, muggle::BenchmarkConfig *config)
 	muggle::GenLatencyReportsBody(fp, config, blocks, "gettimeofday-sorted", cnt, 0, 1, 1);
 }
 
+void benchmark_c_gmtime(FILE *fp, muggle::BenchmarkConfig *config)
+{
+	uint64_t cnt = config->loop * config->cnt_per_loop;
+	muggle::LatencyBlock *blocks = (muggle::LatencyBlock*)malloc(cnt * sizeof(muggle::LatencyBlock));
+
+	for (uint64_t i = 0; i < config->loop; ++i)
+	{
+		for (uint64_t j = 0; j < config->cnt_per_loop; ++j)
+		{
+			uint64_t idx = i * config->cnt_per_loop + j;
+			memset(&blocks[idx], 0, sizeof(muggle::LatencyBlock));
+			blocks[idx].idx = idx;
+
+			struct tm buf;
+			time_t t = time(NULL);
+
+			timespec_get(&blocks[idx].ts[0], TIME_UTC);
+#if MUGGLE_PLATFORM_WINDOWS
+			gmtime_s(&t, &buf);
+#else
+			gmtime_r(&t, &buf);
+#endif
+			timespec_get(&blocks[idx].ts[1], TIME_UTC);
+		}
+
+		if (config->loop_interval_ms > 0)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(config->loop_interval_ms));
+		}
+	}
+
+	muggle::GenLatencyReportsBody(fp, config, blocks, "gmtime", cnt, 0, 1, 0);
+	muggle::GenLatencyReportsBody(fp, config, blocks, "gmtime-sorted", cnt, 0, 1, 1);
+}
+
 int main()
 {
 	// load config
@@ -134,6 +169,10 @@ int main()
 	// gettimeofday()
 	printf("start benchmark: gettimeofday\n");
 	benchmark_gettimeofday(fp, &config);
+
+	// c gmtime()
+	printf("start benchmark: c gmtime\n");
+	benchmark_c_gmtime(fp, &config);
 
 	fclose(fp);
 
