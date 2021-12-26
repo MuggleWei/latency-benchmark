@@ -197,7 +197,7 @@ public class LatencyBenchmarkCommon {
                 config.getProducer(),
                 config.getTotalRounds(),
                 config.getIntervalBetweenRound(),
-                config.getRecordPerRounds()));
+                config.getRecordPerRound()));
 
         // avg
         out.write(String.format("%d,", avg));

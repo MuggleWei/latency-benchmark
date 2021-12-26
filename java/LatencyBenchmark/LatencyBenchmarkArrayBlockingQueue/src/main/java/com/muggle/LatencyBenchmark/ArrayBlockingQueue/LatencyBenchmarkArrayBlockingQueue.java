@@ -22,7 +22,7 @@ public class LatencyBenchmarkArrayBlockingQueue {
         this.config.output();
 
         int recordCount =
-                this.config.getTotalRounds() * this.config.getRecordPerRounds() * this.config.getProducer();
+                this.config.getTotalRounds() * this.config.getRecordPerRound() * this.config.getProducer();
         this.latencyBenchmark = new LatencyBenchmarkCommon(recordCount);
         this.latencyBenchmark.addAction(ACTION_WRITE_BEG, "write_begin");
         this.latencyBenchmark.addAction(ACTION_WRITE_END, "write_end");
@@ -76,7 +76,7 @@ public class LatencyBenchmarkArrayBlockingQueue {
             producerArgs.writeEndRecords = this.latencyBenchmark.getActionTimestampRecords(ACTION_WRITE_END);
             producerArgs.rounds = this.config.getTotalRounds();
             producerArgs.intervalBetweenRound = this.config.getIntervalBetweenRound();
-            producerArgs.recordPerRounds = this.config.getRecordPerRounds();
+            producerArgs.recordPerRounds = this.config.getRecordPerRound();
             producerArgs.producerIdx = i;
             producerArgs.messages = messages;
 

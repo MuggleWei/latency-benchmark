@@ -5,7 +5,7 @@ import org.apache.commons.cli.*;
 public class LatencyBenchmarkConfig {
     private int totalRounds = 100;
     private int intervalBetweenRound = 1;
-    private int recordPerRounds = 10;
+    private int recordPerRound = 10;
     private int producer = 1;
     private int consumer = 1;
     private int capacity = 1024;
@@ -27,12 +27,12 @@ public class LatencyBenchmarkConfig {
         this.intervalBetweenRound = intervalBetweenRound;
     }
 
-    public int getRecordPerRounds() {
-        return recordPerRounds;
+    public int getRecordPerRound() {
+        return recordPerRound;
     }
 
-    public void setRecordPerRounds(int recordPerRounds) {
-        this.recordPerRounds = recordPerRounds;
+    public void setRecordPerRound(int recordPerRound) {
+        this.recordPerRound = recordPerRound;
     }
 
     public int getProducer() {
@@ -87,7 +87,7 @@ public class LatencyBenchmarkConfig {
             this.intervalBetweenRound = Integer.parseInt(cmd.getOptionValue("i"));
         }
         if (cmd.hasOption("m")) {
-            this.recordPerRounds = Integer.parseInt(cmd.getOptionValue("m"));
+            this.recordPerRound = Integer.parseInt(cmd.getOptionValue("m"));
         }
         if (cmd.hasOption("p")) {
             this.producer = Integer.parseInt(cmd.getOptionValue("p"));
@@ -115,7 +115,7 @@ public class LatencyBenchmarkConfig {
     public void output() {
         System.out.println(String.format("round: %d", this.getTotalRounds()));
         System.out.println(String.format("interval ms between round: %d", this.getIntervalBetweenRound()));
-        System.out.println(String.format("record per round: %d", this.getRecordPerRounds()));
+        System.out.println(String.format("record per round: %d", this.getRecordPerRound()));
         System.out.println(String.format("number of producer: %d", this.getProducer()));
         System.out.println(String.format("number of consumer: %d", this.getConsumer()));
         System.out.println(String.format("capacity size: %d", this.getCapacity()));
