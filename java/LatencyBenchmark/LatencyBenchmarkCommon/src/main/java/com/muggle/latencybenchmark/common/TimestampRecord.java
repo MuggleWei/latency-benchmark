@@ -1,3 +1,5 @@
+package com.muggle.latencybenchmark.common;
+
 public class TimestampRecord {
     private int action;
     private int id;

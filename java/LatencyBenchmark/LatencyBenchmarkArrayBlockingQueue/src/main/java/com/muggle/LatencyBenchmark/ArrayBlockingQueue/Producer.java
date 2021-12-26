@@ -1,3 +1,7 @@
+package com.muggle.latencybenchmark.arrayblockingqueue;
+
+import com.muggle.latencybenchmark.common.TimestampRecord;
+
 import java.util.concurrent.BlockingQueue;
 
 public class Producer implements Runnable {

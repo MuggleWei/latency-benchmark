@@ -1,3 +1,5 @@
+package com.muggle.latencybenchmark.arrayblockingqueue;
+
 public class Message {
     public int id;
 

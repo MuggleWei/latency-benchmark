@@ -1,3 +1,7 @@
+package com.muggle.latencybenchmark.arrayblockingqueue;
+
+import com.muggle.latencybenchmark.common.LatencyBenchmarkCommon;
+import com.muggle.latencybenchmark.common.LatencyBenchmarkConfig;
 import org.apache.commons.cli.ParseException;
 
 import java.util.ArrayList;

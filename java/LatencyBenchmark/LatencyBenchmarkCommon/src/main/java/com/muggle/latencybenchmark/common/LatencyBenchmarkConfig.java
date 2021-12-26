@@ -1,3 +1,5 @@
+package com.muggle.latencybenchmark.common;
+
 import org.apache.commons.cli.*;
 
 public class LatencyBenchmarkConfig {
