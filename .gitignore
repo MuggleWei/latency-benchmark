@@ -24,6 +24,7 @@ __pycache__/
 # custom
 nohup.out
 log/
+output/
 
 ####################### from: https://github.com/github/gitignore #######################
 
