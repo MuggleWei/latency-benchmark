@@ -6,6 +6,9 @@ build/
 *.swp
 compile_commands.json
 
+# clangd
+.clangd
+
 # vscode
 .vscode/
 
