@@ -1,6 +1,6 @@
 package com.muggle.latencybenchmark.common;
 
-public class TimestampRecord {
+public class LatencyBenchmarkRecord {
     private int action;
     private int id;
     private long sec;

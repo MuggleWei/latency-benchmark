@@ -2,13 +2,49 @@ package com.muggle.latencybenchmark.common;
 
 import org.apache.commons.cli.*;
 
+/**
+ * benchmark config
+ */
 public class LatencyBenchmarkConfig {
+
+    /**
+     * total rounds in benchmark
+     */
     private int totalRounds = 100;
+
+    /**
+     * round interval in milliseconds
+     */
     private int intervalBetweenRound = 1;
+
+    /**
+     * how many times run in a round
+     */
     private int recordPerRound = 10;
+
+    /**
+     * [optional] number of producer
+     */
     private int producer = 1;
+
+    /**
+     * [optional] number of consumer
+     */
     private int consumer = 1;
+
+    /**
+     * [optional] usually refers to buffer capacity
+     */
     private int capacity = 1024;
+
+    /**
+     * [optional] data block size
+     */
+    private int blockSize = 1024;
+
+    /**
+     * sampling step in report
+     */
     private int reportStep = 10;
 
     public int getTotalRounds() {
@@ -59,6 +95,14 @@ public class LatencyBenchmarkConfig {
         this.capacity = capacity;
     }
 
+    public int getBlockSize() {
+        return blockSize;
+    }
+
+    public void setBlockSize(int blockSize) {
+        this.blockSize = blockSize;
+    }
+
     public int getReportStep() {
         return reportStep;
     }
@@ -75,6 +119,7 @@ public class LatencyBenchmarkConfig {
         options.addOption(new Option("p", "producer", true, "number of producer"));
         options.addOption(new Option("c", "consumer", true, "number of consumer"));
         options.addOption(new Option("s", "capacity", true, "capacity size"));
+        options.addOption(new Option("b", "block_size", true, "data block size"));
         options.addOption(new Option("f", "report_step", true, "report step"));
 
         CommandLineParser parser = new DefaultParser();
@@ -98,6 +143,9 @@ public class LatencyBenchmarkConfig {
         if (cmd.hasOption("s")) {
             this.capacity = Integer.parseInt(cmd.getOptionValue("s"));
         }
+        if (cmd.hasOption("b")) {
+            this.blockSize = Integer.parseInt(cmd.getOptionValue("b"));
+        }
         if (cmd.hasOption("f")) {
             this.reportStep = Integer.parseInt(cmd.getOptionValue("f"));
         }
@@ -119,6 +167,7 @@ public class LatencyBenchmarkConfig {
         System.out.println(String.format("number of producer: %d", this.getProducer()));
         System.out.println(String.format("number of consumer: %d", this.getConsumer()));
         System.out.println(String.format("capacity size: %d", this.getCapacity()));
+        System.out.println(String.format("data block size: %d", this.getBlockSize()));
         System.out.println(String.format("report step: %d", this.getReportStep()));
     }
 }

@@ -1,6 +1,6 @@
 package com.muggle.latencybenchmark.arrayblockingqueue;
 
-import com.muggle.latencybenchmark.common.TimestampRecord;
+import com.muggle.latencybenchmark.common.LatencyBenchmarkRecord;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -10,8 +10,8 @@ public class Producer implements Runnable {
 
         public int writeBegAction;
         public int writeEndAction;
-        public TimestampRecord[] writeBegRecords;
-        public TimestampRecord[] writeEndRecords;
+        public LatencyBenchmarkRecord[] writeBegRecords;
+        public LatencyBenchmarkRecord[] writeEndRecords;
 
         public int rounds;
         public int intervalBetweenRound;
@@ -32,10 +32,10 @@ public class Producer implements Runnable {
         BlockingQueue<Message> queue = this.args.queue;
 
         int writeBegAction = this.args.writeBegAction;
-        TimestampRecord[] writeBegRecords = this.args.writeBegRecords;
+        LatencyBenchmarkRecord[] writeBegRecords = this.args.writeBegRecords;
 
         int writeEndAction = this.args.writeEndAction;
-        TimestampRecord[] writeEndRecords = this.args.writeEndRecords;
+        LatencyBenchmarkRecord[] writeEndRecords = this.args.writeEndRecords;
 
         // get start message index
         int msgId = this.args.producerIdx * this.args.rounds * this.args.recordPerRounds;
@@ -50,13 +50,13 @@ public class Producer implements Runnable {
                     queue.put(msg);
                     long nanoTimeWriteEnd = System.nanoTime();
 
-                    TimestampRecord writeBegRecord = new TimestampRecord();
+                    LatencyBenchmarkRecord writeBegRecord = new LatencyBenchmarkRecord();
                     writeBegRecord.setAction(writeBegAction);
                     writeBegRecord.setId(msg.id);
                     writeBegRecord.setNsec(nanoTimeWriteBeg);
                     writeBegRecords[msg.id] = writeBegRecord;
 
-                    TimestampRecord writeEndRecord = new TimestampRecord();
+                    LatencyBenchmarkRecord writeEndRecord = new LatencyBenchmarkRecord();
                     writeEndRecord.setAction(writeEndAction);
                     writeEndRecord.setId(msg.id);
                     writeEndRecord.setNsec(nanoTimeWriteEnd);

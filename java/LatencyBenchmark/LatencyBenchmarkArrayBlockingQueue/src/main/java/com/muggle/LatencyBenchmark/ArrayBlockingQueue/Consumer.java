@@ -1,6 +1,6 @@
 package com.muggle.latencybenchmark.arrayblockingqueue;
 
-import com.muggle.latencybenchmark.common.TimestampRecord;
+import com.muggle.latencybenchmark.common.LatencyBenchmarkRecord;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -8,7 +8,7 @@ public class Consumer implements Runnable {
     static class ConsumerArgs {
         public BlockingQueue<Message> queue;
         public int readAction;
-        public TimestampRecord[] readRecords;
+        public LatencyBenchmarkRecord[] readRecords;
     }
 
     private ConsumerArgs args;
@@ -21,7 +21,7 @@ public class Consumer implements Runnable {
     public void run() {
         BlockingQueue<Message> queue = this.args.queue;
         int readAction = this.args.readAction;
-        TimestampRecord[] readRecords = this.args.readRecords;
+        LatencyBenchmarkRecord[] readRecords = this.args.readRecords;
 
         while (true) {
             try {
@@ -31,7 +31,7 @@ public class Consumer implements Runnable {
                 }
                 long nanoTime = System.nanoTime();
 
-                TimestampRecord record = new TimestampRecord();
+                LatencyBenchmarkRecord record = new LatencyBenchmarkRecord();
                 record.setAction(readAction);
                 record.setId(msg.id);
                 record.setNsec(nanoTime);

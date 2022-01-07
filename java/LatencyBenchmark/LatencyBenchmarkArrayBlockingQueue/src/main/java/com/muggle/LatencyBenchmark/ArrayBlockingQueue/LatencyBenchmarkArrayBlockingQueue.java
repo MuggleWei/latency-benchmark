@@ -1,6 +1,6 @@
 package com.muggle.latencybenchmark.arrayblockingqueue;
 
-import com.muggle.latencybenchmark.common.LatencyBenchmarkCommon;
+import com.muggle.latencybenchmark.common.LatencyBenchmarkHandle;
 import com.muggle.latencybenchmark.common.LatencyBenchmarkConfig;
 import org.apache.commons.cli.ParseException;
 
@@ -13,7 +13,7 @@ public class LatencyBenchmarkArrayBlockingQueue {
     private static final int ACTION_READ = 2;
 
     private LatencyBenchmarkConfig config = new LatencyBenchmarkConfig();
-    private LatencyBenchmarkCommon latencyBenchmark;
+    private LatencyBenchmarkHandle latencyBenchmark;
 
     public void run(String[] args) throws ParseException, InterruptedException {
         System.out.println("run LatencyBenchmarkArrayBlockingQueue");
@@ -23,7 +23,7 @@ public class LatencyBenchmarkArrayBlockingQueue {
 
         int recordCount =
                 this.config.getTotalRounds() * this.config.getRecordPerRound() * this.config.getProducer();
-        this.latencyBenchmark = new LatencyBenchmarkCommon(recordCount);
+        this.latencyBenchmark = new LatencyBenchmarkHandle(recordCount);
         this.latencyBenchmark.addAction(ACTION_WRITE_BEG, "write_begin");
         this.latencyBenchmark.addAction(ACTION_WRITE_END, "write_end");
         this.latencyBenchmark.addAction(ACTION_READ, "read");
@@ -33,13 +33,13 @@ public class LatencyBenchmarkArrayBlockingQueue {
 
         // generate report
         this.latencyBenchmark.genTimestampRecordsReport(
-                "output/lb_records_array_blocking_queue.csv");
+                "output/benchmark_array_blocking_queue_records.csv");
 
         ArrayList<int[]> pairs = new ArrayList<>();
         pairs.add(new int[]{ACTION_WRITE_BEG, ACTION_WRITE_END});
         pairs.add(new int[]{ACTION_WRITE_BEG, ACTION_READ});
         this.latencyBenchmark.genLatencyReport(
-                "output/latency_array_blocking_queue.csv",
+                "output/benchmark_array_blocking_queue_latency.csv",
                 pairs,
                 this.config);
     }

@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LatencyBenchmarkCommon {
+public class LatencyBenchmarkHandle {
     /**
      * expect total record count
      */
@@ -23,12 +23,12 @@ public class LatencyBenchmarkCommon {
     /**
      * action id to timestamp records map
      */
-    private HashMap<Integer, TimestampRecord[]> actionTimeRecords;
+    private HashMap<Integer, LatencyBenchmarkRecord[]> actionTimeRecords;
 
     /**
      * constructor
      */
-    public LatencyBenchmarkCommon(int recordCount) {
+    public LatencyBenchmarkHandle(int recordCount) {
         this.recordCount = recordCount;
 
         this.actionMap = new HashMap<>();
@@ -48,7 +48,7 @@ public class LatencyBenchmarkCommon {
     public void addAction(int id, String actionName) {
         this.actionMap.put(id, actionName);
 
-        TimestampRecord[] records = new TimestampRecord[this.recordCount];
+        LatencyBenchmarkRecord[] records = new LatencyBenchmarkRecord[this.recordCount];
         this.actionTimeRecords.put(id, records);
     }
 
@@ -68,7 +68,7 @@ public class LatencyBenchmarkCommon {
      * @param action action id
      * @return timestamp records array
      */
-    public TimestampRecord[] getActionTimestampRecords(int action) {
+    public LatencyBenchmarkRecord[] getActionTimestampRecords(int action) {
         return this.actionTimeRecords.get(action);
     }
 
@@ -98,9 +98,9 @@ public class LatencyBenchmarkCommon {
      */
     public void genTimestampRecordsReport(BufferedWriter out) throws IOException {
         for (int i = 0; i < this.recordCount; i++) {
-            for (Map.Entry<Integer, TimestampRecord[]> entry : this.actionTimeRecords.entrySet()) {
+            for (Map.Entry<Integer, LatencyBenchmarkRecord[]> entry : this.actionTimeRecords.entrySet()) {
                 String actionName = this.getActionName(entry.getKey());
-                TimestampRecord[] records = entry.getValue();
+                LatencyBenchmarkRecord[] records = entry.getValue();
                 out.write(String.format("%d,%s,%d,%d\n", i, actionName, records[i].getSec(), records[i].getNsec()));
             }
         }
@@ -141,7 +141,7 @@ public class LatencyBenchmarkCommon {
             LatencyBenchmarkConfig config) throws IOException {
         // write head
         out.write("elapsed unit[ns]\n");
-        out.write("case_name,producer,rounds,interval_ms,record_per_round,avg,");
+        out.write("case_name,rounds,record_per_round,interval_ms,capacity,producer,consumer,avg,");
         for (int i = 0; i < 100; i += config.getReportStep()) {
             out.write(String.format("%d,", i));
         }
@@ -149,12 +149,12 @@ public class LatencyBenchmarkCommon {
 
         // write body
         for (int[] latencyPair : latencyPairs) {
-            String idxCaseName = String.format("%s->%s by idx,",
+            String idxCaseName = String.format("%s->%s by idx",
                     this.getActionName(latencyPair[0]),
                     this.getActionName(latencyPair[1]));
             genLatencyReportBody(out, latencyPair, config, idxCaseName, false);
 
-            String elapsedCaseName = String.format("%s->%s by elapsed,",
+            String elapsedCaseName = String.format("%s->%s by elapsed",
                     this.getActionName(latencyPair[0]),
                     this.getActionName(latencyPair[1]));
             genLatencyReportBody(out, latencyPair, config, elapsedCaseName, true);
@@ -167,8 +167,8 @@ public class LatencyBenchmarkCommon {
             LatencyBenchmarkConfig config,
             String caseName,
             boolean sort) throws IOException {
-        TimestampRecord[] begRecords = this.getActionTimestampRecords(latencyPair[0]);
-        TimestampRecord[] endRecords = this.getActionTimestampRecords(latencyPair[1]);
+        LatencyBenchmarkRecord[] begRecords = this.getActionTimestampRecords(latencyPair[0]);
+        LatencyBenchmarkRecord[] endRecords = this.getActionTimestampRecords(latencyPair[1]);
 
         int cnt = begRecords.length;
         long[] elapsed = new long[cnt];
@@ -189,18 +189,16 @@ public class LatencyBenchmarkCommon {
             Arrays.sort(elapsed);
         }
 
-        // case_name
-        out.write(caseName);
-
-        // producer,rounds,interval_ms,record_per_round
-        out.write(String.format("%s,%s,%s,%s,",
-                config.getProducer(),
+        // case_name,rounds,record_per_round,interval_ms,capacity,producer,consumer,avg
+        out.write(String.format("%s,%d,%d,%d,%d,%d,%d,%d,",
+                caseName,
                 config.getTotalRounds(),
+                config.getRecordPerRound(),
                 config.getIntervalBetweenRound(),
-                config.getRecordPerRound()));
-
-        // avg
-        out.write(String.format("%d,", avg));
+                config.getCapacity(),
+                config.getProducer(),
+                config.getConsumer(),
+                avg));
 
         // quantile
         for (int i = 0; i < 100; i += config.getReportStep()) {
@@ -211,10 +209,10 @@ public class LatencyBenchmarkCommon {
                 out.write(String.format("%d,", elapsed[pos]));
             }
         }
-        if (elapsed[cnt-1] == Integer.MAX_VALUE) {
+        if (elapsed[cnt - 1] == Integer.MAX_VALUE) {
             out.write("-");
         } else {
-            out.write(String.format("%d", elapsed[cnt-1]));
+            out.write(String.format("%d", elapsed[cnt - 1]));
         }
         out.write("\n");
     }
