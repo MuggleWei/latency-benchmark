@@ -13,24 +13,14 @@ public class LatencyBenchmarkConfig {
     private int totalRounds = 100;
 
     /**
-     * round interval in milliseconds
-     */
-    private int intervalBetweenRound = 1;
-
-    /**
      * how many times run in a round
      */
     private int recordPerRound = 10;
 
     /**
-     * [optional] number of producer
+     * round interval in milliseconds
      */
-    private int producer = 1;
-
-    /**
-     * [optional] number of consumer
-     */
-    private int consumer = 1;
+    private int intervalBetweenRound = 1;
 
     /**
      * [optional] usually refers to buffer capacity
@@ -41,6 +31,16 @@ public class LatencyBenchmarkConfig {
      * [optional] data block size
      */
     private int blockSize = 1024;
+
+    /**
+     * [optional] number of producer
+     */
+    private int producer = 1;
+
+    /**
+     * [optional] number of consumer
+     */
+    private int consumer = 1;
 
     /**
      * sampling step in report
@@ -55,14 +55,6 @@ public class LatencyBenchmarkConfig {
         this.totalRounds = totalRounds;
     }
 
-    public int getIntervalBetweenRound() {
-        return intervalBetweenRound;
-    }
-
-    public void setIntervalBetweenRound(int intervalBetweenRound) {
-        this.intervalBetweenRound = intervalBetweenRound;
-    }
-
     public int getRecordPerRound() {
         return recordPerRound;
     }
@@ -71,20 +63,12 @@ public class LatencyBenchmarkConfig {
         this.recordPerRound = recordPerRound;
     }
 
-    public int getProducer() {
-        return producer;
+    public int getIntervalBetweenRound() {
+        return intervalBetweenRound;
     }
 
-    public void setProducer(int producer) {
-        this.producer = producer;
-    }
-
-    public int getConsumer() {
-        return consumer;
-    }
-
-    public void setConsumer(int consumer) {
-        this.consumer = consumer;
+    public void setIntervalBetweenRound(int intervalBetweenRound) {
+        this.intervalBetweenRound = intervalBetweenRound;
     }
 
     public int getCapacity() {
@@ -101,6 +85,22 @@ public class LatencyBenchmarkConfig {
 
     public void setBlockSize(int blockSize) {
         this.blockSize = blockSize;
+    }
+
+    public int getProducer() {
+        return producer;
+    }
+
+    public void setProducer(int producer) {
+        this.producer = producer;
+    }
+
+    public int getConsumer() {
+        return consumer;
+    }
+
+    public void setConsumer(int consumer) {
+        this.consumer = consumer;
     }
 
     public int getReportStep() {
@@ -128,23 +128,23 @@ public class LatencyBenchmarkConfig {
         if (cmd.hasOption("r")) {
             this.totalRounds = Integer.parseInt(cmd.getOptionValue("r"));
         }
-        if (cmd.hasOption("i")) {
-            this.intervalBetweenRound = Integer.parseInt(cmd.getOptionValue("i"));
-        }
         if (cmd.hasOption("m")) {
             this.recordPerRound = Integer.parseInt(cmd.getOptionValue("m"));
         }
-        if (cmd.hasOption("p")) {
-            this.producer = Integer.parseInt(cmd.getOptionValue("p"));
-        }
-        if (cmd.hasOption("c")) {
-            this.consumer = Integer.parseInt(cmd.getOptionValue("c"));
+        if (cmd.hasOption("i")) {
+            this.intervalBetweenRound = Integer.parseInt(cmd.getOptionValue("i"));
         }
         if (cmd.hasOption("s")) {
             this.capacity = Integer.parseInt(cmd.getOptionValue("s"));
         }
         if (cmd.hasOption("b")) {
             this.blockSize = Integer.parseInt(cmd.getOptionValue("b"));
+        }
+        if (cmd.hasOption("p")) {
+            this.producer = Integer.parseInt(cmd.getOptionValue("p"));
+        }
+        if (cmd.hasOption("c")) {
+            this.consumer = Integer.parseInt(cmd.getOptionValue("c"));
         }
         if (cmd.hasOption("f")) {
             this.reportStep = Integer.parseInt(cmd.getOptionValue("f"));
@@ -162,12 +162,12 @@ public class LatencyBenchmarkConfig {
 
     public void output() {
         System.out.println(String.format("round: %d", this.getTotalRounds()));
-        System.out.println(String.format("interval ms between round: %d", this.getIntervalBetweenRound()));
         System.out.println(String.format("record per round: %d", this.getRecordPerRound()));
-        System.out.println(String.format("number of producer: %d", this.getProducer()));
-        System.out.println(String.format("number of consumer: %d", this.getConsumer()));
         System.out.println(String.format("capacity size: %d", this.getCapacity()));
         System.out.println(String.format("data block size: %d", this.getBlockSize()));
+        System.out.println(String.format("interval ms between round: %d", this.getIntervalBetweenRound()));
+        System.out.println(String.format("number of producer: %d", this.getProducer()));
+        System.out.println(String.format("number of consumer: %d", this.getConsumer()));
         System.out.println(String.format("report step: %d", this.getReportStep()));
     }
 }
