@@ -1,4 +1,4 @@
-package com.muggle.latencybenchmark.common;
+package com.muggle.latencybenchmark;
 
 public class LatencyBenchmarkRecord {
     private int action;

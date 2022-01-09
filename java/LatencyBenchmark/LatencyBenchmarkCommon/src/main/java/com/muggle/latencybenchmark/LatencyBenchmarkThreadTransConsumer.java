@@ -1,4 +1,4 @@
-package com.muggle.latencybenchmark.common;
+package com.muggle.latencybenchmark;
 
 public class LatencyBenchmarkThreadTransConsumer<T> implements Runnable {
     static class ConsumerArgs<T> {
@@ -7,6 +7,7 @@ public class LatencyBenchmarkThreadTransConsumer<T> implements Runnable {
         public LatencyBenchmarkHandle handle;
         public int readAction;
         public int consumerId;
+        public int totalRead;
     }
 
     private ConsumerArgs<T> args;
@@ -22,7 +23,7 @@ public class LatencyBenchmarkThreadTransConsumer<T> implements Runnable {
         LatencyBenchmarkRecord[] readRecords = this.args.handle.getActionTimestampRecords(this.args.readAction);
         int readAction = this.args.readAction;
 
-        int count = 0;
+        this.args.totalRead = 0;
         while (true) {
             LatencyBenchmarkThreadTransMessage msg = null;
             try {
@@ -43,10 +44,10 @@ public class LatencyBenchmarkThreadTransConsumer<T> implements Runnable {
             record.setNsec(nanoTime);
             readRecords[msg.id] = record;
 
-            count++;
+            this.args.totalRead++;
         }
 
         System.out.println(String.format("consumer[%d] completed, total read record: %d",
-                this.args.consumerId, count));
+                this.args.consumerId, this.args.totalRead));
     }
 }

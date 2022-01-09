@@ -1,4 +1,4 @@
-package com.muggle.latencybenchmark.common;
+package com.muggle.latencybenchmark;
 
 import java.util.ArrayList;
 
@@ -95,15 +95,20 @@ public class LatencyBenchmarkThreadTrans<T> {
         }
 
         // prepare consumers
+        LatencyBenchmarkThreadTransConsumer.ConsumerArgs[] consumerArgsArray =
+                new LatencyBenchmarkThreadTransConsumer.ConsumerArgs[this.config.getConsumer()];
         ArrayList<Thread> consumers = new ArrayList<>();
         for (int i = 0; i < this.config.getConsumer(); i++) {
             LatencyBenchmarkThreadTransConsumer.ConsumerArgs<T> consumerArgs =
                     new LatencyBenchmarkThreadTransConsumer.ConsumerArgs<>();
+            consumerArgsArray[i] = consumerArgs;
+
             consumerArgs.userArgs = this.userArgs;
             consumerArgs.readCallback = this.readCallback;
             consumerArgs.handle = this.handle;
             consumerArgs.readAction = ACTION_READ;
             consumerArgs.consumerId = i;
+            consumerArgs.totalRead = 0;
 
             Thread consumer = new Thread(
                     new LatencyBenchmarkThreadTransConsumer<T>(consumerArgs));
@@ -147,21 +152,40 @@ public class LatencyBenchmarkThreadTrans<T> {
             producer.join();
         }
 
-        this.completedCallback.completed(this.config, this.userArgs);
+        if (this.completedCallback != null) {
+            this.completedCallback.completed(this.config, this.userArgs);
+        }
 
         for (Thread consumer : consumers) {
             consumer.join();
         }
+
+        // consumer read messages
+        int totalReadMsg = 0;
+        for (LatencyBenchmarkThreadTransConsumer.ConsumerArgs consumerArgs : consumerArgsArray) {
+            totalReadMsg += consumerArgs.totalRead;
+        }
+        System.out.println(String.format("Consumers total read messages: %d", totalReadMsg));
+    }
+
+    /**
+     * get benchmark records by action id
+     *
+     * @param action action id
+     * @return benchmark records
+     */
+    public LatencyBenchmarkRecord[] getActionTimestampRecords(int action) {
+        return this.handle.getActionTimestampRecords(action);
     }
 
     /**
      * generate latency benchmark report
      */
     public void genReport(String name) {
-        String recordFileName = String.format("output/benchmark_%s_records", name);
+        String recordFileName = String.format("output/benchmark_%s_records.csv", name);
         this.handle.genTimestampRecordsReport(recordFileName);
 
-        String latencyFileName = String.format("output/benchmark_%s_latency", name);
+        String latencyFileName = String.format("output/benchmark_%s_latency.csv", name);
         ArrayList<int[]> pairs = new ArrayList<>();
         pairs.add(new int[]{ACTION_WRITE_BEGIN, ACTION_WRITE_END});
         pairs.add(new int[]{ACTION_WRITE_BEGIN, ACTION_READ});

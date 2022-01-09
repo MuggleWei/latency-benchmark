@@ -1,4 +1,4 @@
-package com.muggle.latencybenchmark.common;
+package com.muggle.latencybenchmark;
 
 import java.io.BufferedWriter;
 import java.io.File;

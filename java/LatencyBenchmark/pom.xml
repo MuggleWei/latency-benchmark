@@ -11,6 +11,7 @@
     <modules>
         <module>LatencyBenchmarkCommon</module>
         <module>LatencyBenchmarkArrayBlockingQueue</module>
+        <module>LatencyBenchmarkDisruptor</module>
     </modules>
 
     <properties>

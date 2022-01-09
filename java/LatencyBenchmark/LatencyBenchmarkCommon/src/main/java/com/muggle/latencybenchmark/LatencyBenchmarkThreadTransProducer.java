@@ -1,4 +1,4 @@
-package com.muggle.latencybenchmark.common;
+package com.muggle.latencybenchmark;
 
 public class LatencyBenchmarkThreadTransProducer<T> implements Runnable {
     static class ProducerArgs<T> {
