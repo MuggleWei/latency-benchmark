@@ -1,25 +1,18 @@
 #include "muggle/c/muggle_c.h"
 #include "muggle_benchmark/muggle_benchmark.h"
 
-void func_c_snprintf(void *args, uint64_t idx)
+void func_fetch_add(void *args, uint64_t idx)
 {
-	char buf[512];
-	snprintf(buf, sizeof(buf), "%d", (int)idx);
+	for (int i = 0; i < 1000; i++)
+	{
+		muggle_atomic_fetch_add((int*)args, 1, muggle_memory_order_release);
+	}
 }
 
-void vsnprintf_fmt(const char *format, ...)
+void func_add_equal(void *args, uint64_t idx)
 {
-	char buf[512];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-}
-
-void func_c_vsnprintf(void *args, uint64_t idx)
-{
-	vsnprintf_fmt("%d", (int)idx);
+	int *p_var = (int*)args;
+	*p_var += 1;
 }
 
 void benchmark_func(
@@ -27,12 +20,14 @@ void benchmark_func(
 	fn_muggle_benchmark_func func,
 	const char *name)
 {
+	int var = 0;
+
 	// initialize benchmark memory pool handle
 	muggle_benchmark_func_t benchmark;
 	muggle_benchmark_func_init(
 		&benchmark,
 		config,
-		NULL,
+		(void*)&var,
 		func);
 
 	// run
@@ -56,12 +51,8 @@ int main(int argc, char *argv[])
 	muggle_benchmark_config_output(&config);
 
 	MUGGLE_LOG_INFO("--------------------------------------------------------");
-	MUGGLE_LOG_INFO("run snprintf");
-	benchmark_func(&config, func_c_snprintf, "snprintf");
-
-	MUGGLE_LOG_INFO("--------------------------------------------------------");
-	MUGGLE_LOG_INFO("run vsnprintf");
-	benchmark_func(&config, func_c_snprintf, "vsnprintf");
+	MUGGLE_LOG_INFO("run atomic_fetch_add 1k times");
+	benchmark_func(&config, func_fetch_add, "atomic_fetch_add_1k");
 
 	return 0;
 }
