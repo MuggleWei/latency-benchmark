@@ -116,10 +116,14 @@ public class LatencyBenchmarkHandle {
     public void genLatencyReport(
             String filepath, ArrayList<int[]> latencyPairs, LatencyBenchmarkConfig config) {
         File filePath = new File(filepath);
-        File parentDir = new File(filePath.getParent());
-        if (!parentDir.exists()) {
-            parentDir.mkdirs();
+        String fileParentDir = filePath.getParent();
+        if (fileParentDir != null) {
+            File parentDir = new File(fileParentDir);
+            if (!parentDir.exists()) {
+                parentDir.mkdirs();
+            }
         }
+
 
         try (BufferedWriter out = new BufferedWriter(new FileWriter(filepath))) {
             genLatencyReport(out, latencyPairs, config);

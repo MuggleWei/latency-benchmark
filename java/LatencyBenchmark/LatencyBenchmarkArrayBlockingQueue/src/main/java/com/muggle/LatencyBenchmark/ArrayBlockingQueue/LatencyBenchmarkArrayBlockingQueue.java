@@ -1,111 +1,80 @@
 package com.muggle.latencybenchmark.arrayblockingqueue;
 
-import com.muggle.latencybenchmark.common.LatencyBenchmarkHandle;
 import com.muggle.latencybenchmark.common.LatencyBenchmarkConfig;
+import com.muggle.latencybenchmark.common.LatencyBenchmarkThreadTrans;
+import com.muggle.latencybenchmark.common.LatencyBenchmarkThreadTransMessage;
 import org.apache.commons.cli.ParseException;
 
-import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class LatencyBenchmarkArrayBlockingQueue {
-    private static final int ACTION_WRITE_BEG = 0;
-    private static final int ACTION_WRITE_END = 1;
-    private static final int ACTION_READ = 2;
 
-    private LatencyBenchmarkConfig config = new LatencyBenchmarkConfig();
-    private LatencyBenchmarkHandle latencyBenchmark;
+    public static class ArrayBlockingQueueWrite
+            implements LatencyBenchmarkThreadTrans.WriteCallback<ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage>> {
+
+        @Override
+        public boolean write(
+                ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage> userArgs,
+                LatencyBenchmarkThreadTransMessage msg) throws InterruptedException {
+            userArgs.put(msg);
+            return true;
+        }
+    }
+
+    public static class ArrayBlockingQueueRead
+            implements LatencyBenchmarkThreadTrans.ReadCallback<ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage>> {
+
+        @Override
+        public LatencyBenchmarkThreadTransMessage read(ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage> userArgs) throws InterruptedException {
+            return userArgs.take();
+        }
+    }
+
+    public static class ArrayBlockingQueueCompleted
+            implements LatencyBenchmarkThreadTrans.CompletedCallback<ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage>> {
+
+        @Override
+        public void completed(LatencyBenchmarkConfig config, ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage> userArgs) throws InterruptedException {
+            LatencyBenchmarkThreadTransMessage msg = new LatencyBenchmarkThreadTransMessage();
+            msg.id = -1;
+            userArgs.put(msg);
+        }
+    }
+
 
     public void run(String[] args) throws ParseException, InterruptedException {
         System.out.println("run LatencyBenchmarkArrayBlockingQueue");
 
-        this.config.parseCommandLine(args);
-        this.config.output();
+        LatencyBenchmarkConfig config = new LatencyBenchmarkConfig();
+        config.parseCommandLine(args);
+        config.setProducer(0);
+        config.output();
 
-        int recordCount =
-                this.config.getTotalRounds() * this.config.getRecordPerRound() * this.config.getProducer();
-        this.latencyBenchmark = new LatencyBenchmarkHandle(recordCount);
-        this.latencyBenchmark.addAction(ACTION_WRITE_BEG, "write_begin");
-        this.latencyBenchmark.addAction(ACTION_WRITE_END, "write_end");
-        this.latencyBenchmark.addAction(ACTION_READ, "read");
-
-        // run latency benchmark
-        this.run();
-
-        // generate report
-        this.latencyBenchmark.genTimestampRecordsReport(
-                "output/benchmark_array_blocking_queue_records.csv");
-
-        ArrayList<int[]> pairs = new ArrayList<>();
-        pairs.add(new int[]{ACTION_WRITE_BEG, ACTION_WRITE_END});
-        pairs.add(new int[]{ACTION_WRITE_BEG, ACTION_READ});
-        this.latencyBenchmark.genLatencyReport(
-                "output/benchmark_array_blocking_queue_latency.csv",
-                pairs,
-                this.config);
-    }
-
-    public void run() throws InterruptedException {
-        ArrayBlockingQueue<Message> queue = new ArrayBlockingQueue<>(this.config.getCapacity());
-
-        // prepare all message
-        int total = this.latencyBenchmark.getRecordCount();
-        Message[] messages = new Message[total];
-        for (int i = 0; i < total; ++i) {
-            messages[i] = new Message(i);
+        int hc = Runtime.getRuntime().availableProcessors();
+        if (hc <= 0) {
+            hc = 2;
         }
+        int[] producerNums = new int[]{
+                1, 2, 4, hc / 2, hc, hc * 2, hc * 4
+        };
 
-        ArrayList<Thread> consumers = new ArrayList<>();
-        for (int i = 0; i < this.config.getConsumer(); i++) {
-            Consumer.ConsumerArgs consumerArgs = new Consumer.ConsumerArgs();
-            consumerArgs.queue = queue;
-            consumerArgs.readAction = ACTION_READ;
-            consumerArgs.readRecords = this.latencyBenchmark.getActionTimestampRecords(ACTION_READ);
+        for (int producerNum : producerNums) {
+            config.setProducer(producerNum);
 
-            Thread consumer = new Thread(new Consumer(consumerArgs));
-            consumers.add(consumer);
-        }
+            LatencyBenchmarkThreadTrans<ArrayBlockingQueue<LatencyBenchmarkThreadTransMessage>> benchmark =
+                    new LatencyBenchmarkThreadTrans<>(
+                            config,
+                            new ArrayBlockingQueue<>(config.getCapacity()),
+                            new ArrayBlockingQueueWrite(),
+                            new ArrayBlockingQueueRead(),
+                            new ArrayBlockingQueueCompleted());
 
-        // prepare producers
-        ArrayList<Thread> producers = new ArrayList<>();
-        for (int i = 0; i < this.config.getProducer(); i++) {
-            Producer.ProducerArgs producerArgs = new Producer.ProducerArgs();
-            producerArgs.queue = queue;
-            producerArgs.writeBegAction = ACTION_WRITE_BEG;
-            producerArgs.writeEndAction = ACTION_WRITE_END;
-            producerArgs.writeBegRecords = this.latencyBenchmark.getActionTimestampRecords(ACTION_WRITE_BEG);
-            producerArgs.writeEndRecords = this.latencyBenchmark.getActionTimestampRecords(ACTION_WRITE_END);
-            producerArgs.rounds = this.config.getTotalRounds();
-            producerArgs.intervalBetweenRound = this.config.getIntervalBetweenRound();
-            producerArgs.recordPerRounds = this.config.getRecordPerRound();
-            producerArgs.producerIdx = i;
-            producerArgs.messages = messages;
+            System.out.println(String.format("run ArrayBlockingQueue - %d writer and %d reader",
+                    config.getProducer(), config.getConsumer()));
+            benchmark.run();
 
-            Thread producer = new Thread(new Producer(producerArgs));
-            producers.add(producer);
-        }
-
-        // run consumers and producers
-        for (Thread consumer : consumers) {
-            consumer.start();
-        }
-        try {
-            Thread.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        for (Thread producer : producers) {
-            producer.start();
-        }
-
-        // write producers and consumers exit
-        for (Thread producer : producers) {
-            producer.join();
-        }
-        for (Thread consumer : consumers) {
-            queue.put(new Message(-1));
-        }
-        for (Thread consumer : consumers) {
-            consumer.join();
+            benchmark.genReport(String.format("arrayblockingqueue_%d_%d",
+                    config.getProducer(), config.getConsumer()));
         }
     }
 
