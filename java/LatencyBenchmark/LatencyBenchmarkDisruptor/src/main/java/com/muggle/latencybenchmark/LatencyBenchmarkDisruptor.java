@@ -82,7 +82,7 @@ public class LatencyBenchmarkDisruptor {
             hc = 2;
         }
         int[] producerNums = new int[]{
-                2, 4, hc / 2, hc, hc * 2, hc * 4
+                1, 2, 4, hc / 2, hc, hc * 2, hc * 4
         };
         int[] consumerNums = new int[]{
                 1, 2, 4, hc / 2, hc, hc * 2, hc * 4
