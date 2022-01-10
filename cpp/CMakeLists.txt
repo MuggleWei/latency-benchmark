@@ -28,43 +28,37 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
 
 ################################
-# mugglecpp
+# mugglec
 
-# Download and unpack mugglecpp at configure time
+# Download and unpack mugglec at configure time
 configure_file(
-	${CMAKE_CURRENT_LIST_DIR}/cmake/mugglecpp.cmake.in
-	${FETCHCONTENT_BASE_DIR}/mugglecpp-download/CMakeLists.txt)
+	${CMAKE_CURRENT_LIST_DIR}/cmake/mugglec.cmake.in
+	${FETCHCONTENT_BASE_DIR}/mugglec-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
 	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglecpp-download)
+	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglec-download)
 if (result)
-	message(FATAL_ERROR "cmake step for mugglecpp failed: ${result}")
+	message(FATAL_ERROR "cmake step for mugglec failed: ${result}")
 endif()
 execute_process(COMMAND ${CMAKE_COMMAND} --build .
 	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglecpp-download)
+	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglec-download)
 if (result)
-	message(FATAL_ERROR "build step for mugglecpp failed: ${result}")
+	message(FATAL_ERROR "build step for mugglec failed: ${result}")
 endif()
 
-# set mugglec & mugglecpp compile options
+# set mugglec compile options
 set(MUGGLE_BUILD_TRACE OFF CACHE BOOL "")
 set(MUGGLE_BUILD_SHARED_LIB ON CACHE BOOL "")
 set(MUGGLE_BUILD_STATIC_PIC ON CACHE BOOL "")
-set(MUGGLE_BUILD_BENCHMARK OFF CACHE BOOL "")
+set(MUGGLE_BUILD_BENCHMARK ON CACHE BOOL "")
 set(MUGGLE_BUILD_TESTING OFF CACHE BOOL "")
 set(MUGGLE_BUILD_EXAMPLE OFF CACHE BOOL "")
 
-set(MUGGLE_CPP_BUILD_SHARED_LIB ON CACHE BOOL "")
-set(MUGGLE_CPP_BUILD_STATIC_PIC ON CACHE BOOL "")
-set(MUGGLE_CPP_BUILD_EXAMPLE OFF CACHE BOOL "")
-set(MUGGLE_CPP_DOWNLOAD_MUGGLEC ON CACHE BOOL "")
-
-# add mugglecpp to build
+# add mugglec to build
 add_subdirectory(
-	${FETCHCONTENT_BASE_DIR}/mugglecpp-src
-	${FETCHCONTENT_BASE_DIR}/mugglecpp-build
-)
+	${FETCHCONTENT_BASE_DIR}/mugglec-src
+	${FETCHCONTENT_BASE_DIR}/mugglec-build)
 
 ################################
 # google/benchmark
@@ -100,7 +94,7 @@ add_subdirectory(
 # cmake
 include(${FETCHCONTENT_BASE_DIR}/mugglec-src/cmake/muggle_utils.cmake)
 
-set(mugglecpp mugglecpp)
+set(mugglec mugglec)
 set(benchmark benchmark)
 
 # functions
@@ -124,11 +118,10 @@ function(add_benchmark name folder)
 	else()
 		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
 	endif(WIN32)
-	add_dependencies(${name} ${benchmark} ${mugglecpp})
-	target_link_libraries(${name} ${benchmark} ${mugglecpp})
+	add_dependencies(${name} ${benchmark} ${mugglec})
+	target_link_libraries(${name} ${benchmark} ${mugglec})
 	target_include_directories(${name} PRIVATE
 		${FETCHCONTENT_BASE_DIR}/mugglec-src
-		${FETCHCONTENT_BASE_DIR}/mugglecpp-src
 		${FETCHCONTENT_BASE_DIR}/benchmark-src
 	)
 endfunction()

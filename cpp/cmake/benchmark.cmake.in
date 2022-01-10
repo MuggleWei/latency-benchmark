@@ -14,4 +14,3 @@ ExternalProject_Add(mugglec
         INSTALL_COMMAND   ""
         TEST_COMMAND      ""
 )
-
