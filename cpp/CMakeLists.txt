@@ -24,139 +24,86 @@ endif()
 # set use folder in vs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# add custom cmake modules
-INCLUDE(FindPackageHandleStandardArgs)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules)
-include(${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC/cmake/muggle_utils.cmake)
+# set fetch content base dir
+set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
 
-# dependencies
-find_package(Threads)
-find_package(OpenSSL REQUIRED)
-find_package(ZLIB REQUIRED)
+################################
+# mugglecpp
 
-# glog
-set(WITH_GFLAGS OFF CACHE BOOL "glog with gflags") 
-set(BUILD_TESTING OFF CACHE BOOL "glog build testting") 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog)
-set_target_properties(glog
-	PROPERTIES FOLDER "thirdparty/google"
-)
-
-# muggleCC
-set(MUGGLE_BUILD_ONLY_C OFF)
-set(MUGGLE_BUILD_EXAMPLE OFF)
-set(MUGGLE_BUILD_TEST OFF)
-set(MUGGLE_BUILD_BENCHMARK OFF)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC)
-set_target_properties(muggleCC muggle_benchmark
-	PROPERTIES
-	FOLDER "thirdparty/muggle"
-)
-
-# libuv
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv)
-set_target_properties(uv uv_a
-	PROPERTIES FOLDER "thirdparty/libuv"
-)
-
-# uWebSockets
-file(GLOB UWS_H ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src/*.h)
-file(GLOB UWS_CPP ${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src/*.cpp)
-if (WIN32)
-	add_library(uWS SHARED
-		${UWS_H}
-		${UWS_CPP}
-	)
-else()
-	add_library(uWS SHARED
-		${UWS_CPP}
-	)
-endif(WIN32)
-add_dependencies(uWS uv)
-target_link_libraries(uWS
-	${OPENSSL_LIBRARIES}
-	${ZLIB_LIBRARIES}
-	${CMAKE_THREAD_LIBS_INIT}
-	uv
-)
-target_include_directories(uWS PUBLIC
-	${OPENSSL_INCLUDE_DIR}
-	${ZLIB_INCLUDE_DIR}
-	${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
-)
-target_compile_definitions(uWS PRIVATE UWS_THREADSAFE)
-set_target_properties(uWS
-	PROPERTIES FOLDER "thirdparty/uWs"
-)
-add_custom_command(
-	TARGET uWS POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/thirdparty/uWS
-)
-foreach(uWS_Header ${UWS_H})
-	get_filename_component(uWS_Header_name ${uWS_Header} NAME)
-	add_custom_command(
-		TARGET uWS
-		POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy ${uWS_Header} ${CMAKE_BINARY_DIR}/thirdparty/uWS/include/uWS/${uWS_Header_name}
-	)
-endforeach(uWS_Header ${UWS_H})
-
-set_target_properties(uWS PROPERTIES PUBLIC_HEADER "${UWS_H}")
-install(
-    TARGETS uWS
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib/static
-    PUBLIC_HEADER DESTINATION include/uWS
-)
-
-# latency common
-file(GLOB latency_common_H ${CMAKE_CURRENT_LIST_DIR}/src/latency_common/*.h)
-file(GLOB latency_common_CPP ${CMAKE_CURRENT_LIST_DIR}/src/latency_common/*.cpp)
-if (WIN32)
-	add_library(latency_common_cpp STATIC
-		${latency_common_H}
-		${latency_common_CPP}
-	)
-else()
-	add_library(latency_common_cpp STATIC
-		${latency_common_CPP}
-	)
+# Download and unpack mugglecpp at configure time
+configure_file(
+	${CMAKE_CURRENT_LIST_DIR}/cmake/mugglecpp.cmake.in
+	${FETCHCONTENT_BASE_DIR}/mugglecpp-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglecpp-download)
+if (result)
+	message(FATAL_ERROR "cmake step for mugglecpp failed: ${result}")
 endif()
-target_include_directories(latency_common_cpp
-	PUBLIC 
-	${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
-	${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
-	${CMAKE_BINARY_DIR}/thirdparty/google/glog/
-	${CMAKE_CURRENT_LIST_DIR}/src
-)
-
-# benchmark config
-file(GLOB benchmark_common_H ${CMAKE_CURRENT_LIST_DIR}/src/benchmark_common/*.h)
-file(GLOB benchmark_common_CPP ${CMAKE_CURRENT_LIST_DIR}/src/benchmark_common/*.cpp)
-if (WIN32)
-	add_library(benchmark_common_cpp STATIC
-		${benchmark_common_H}
-		${benchmark_common_CPP}
-	)
-else()
-	add_library(benchmark_common_cpp STATIC
-		${benchmark_common_CPP}
-	)
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglecpp-download)
+if (result)
+	message(FATAL_ERROR "build step for mugglecpp failed: ${result}")
 endif()
-target_include_directories(benchmark_common_cpp
-	PUBLIC 
-	${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
-	${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
-	${CMAKE_CURRENT_LIST_DIR}/src
-)
-add_dependencies(benchmark_common_cpp muggleCC muggle_benchmark)
-target_link_libraries(benchmark_common_cpp
-	muggleCC
-	muggle_benchmark
+
+# set mugglec & mugglecpp compile options
+set(MUGGLE_BUILD_TRACE OFF CACHE BOOL "")
+set(MUGGLE_BUILD_SHARED_LIB ON CACHE BOOL "")
+set(MUGGLE_BUILD_STATIC_PIC ON CACHE BOOL "")
+set(MUGGLE_BUILD_BENCHMARK OFF CACHE BOOL "")
+set(MUGGLE_BUILD_TESTING OFF CACHE BOOL "")
+set(MUGGLE_BUILD_EXAMPLE OFF CACHE BOOL "")
+
+set(MUGGLE_CPP_BUILD_SHARED_LIB ON CACHE BOOL "")
+set(MUGGLE_CPP_BUILD_STATIC_PIC ON CACHE BOOL "")
+set(MUGGLE_CPP_BUILD_EXAMPLE OFF CACHE BOOL "")
+set(MUGGLE_CPP_DOWNLOAD_MUGGLEC ON CACHE BOOL "")
+
+# add mugglecpp to build
+add_subdirectory(
+	${FETCHCONTENT_BASE_DIR}/mugglecpp-src
+	${FETCHCONTENT_BASE_DIR}/mugglecpp-build
 )
 
-# benchmark utils function
+################################
+# google/benchmark
+
+configure_file(
+	${CMAKE_CURRENT_LIST_DIR}/cmake/benchmark.cmake.in
+	${FETCHCONTENT_BASE_DIR}/benchmark-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/benchmark-download)
+if (result)
+	message(FATAL_ERROR "cmake step for benchmark failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/benchmark-download)
+if (result)
+	message(FATAL_ERROR "build step for benchmark failed: ${result}")
+endif()
+
+set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "")
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "")
+
+# add benchmark to build
+add_subdirectory(
+	${FETCHCONTENT_BASE_DIR}/benchmark-src
+	${FETCHCONTENT_BASE_DIR}/benchmark-build
+)
+
+################################
+# projects
+
+# cmake
+include(${FETCHCONTENT_BASE_DIR}/mugglec-src/cmake/muggle_utils.cmake)
+
+set(mugglecpp mugglecpp)
+set(benchmark benchmark)
+
+# functions
 function(add_benchmark name folder)
 	message("add benchmark ${name} ${folder}")
 	
@@ -177,59 +124,16 @@ function(add_benchmark name folder)
 	else()
 		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
 	endif(WIN32)
-	target_include_directories(${name}
-		PRIVATE 
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
-		${CMAKE_BINARY_DIR}/thirdparty/google/glog/
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
-		${CMAKE_CURRENT_LIST_DIR}/src
+	add_dependencies(${name} ${benchmark} ${mugglecpp})
+	target_link_libraries(${name} ${benchmark} ${mugglecpp})
+	target_include_directories(${name} PRIVATE
+		${FETCHCONTENT_BASE_DIR}/mugglecpp-src
+		${FETCHCONTENT_BASE_DIR}/benchmark-src
 	)
-	add_dependencies(${name} benchmark_common_cpp)
-	target_link_libraries(${name} benchmark_common_cpp)
 endfunction()
 
-
-# ws utils function
-function(add_ws name folder)
-	file(GLOB tmp_h ${folder}/*.h)
-	file(GLOB tmp_cpp ${folder}/*.cpp)
-	file(GLOB handle_h ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_handle/*.h)
-	file(GLOB handle_pp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_handle/*.cpp)
-	if (WIN32)
-		add_executable(${name} ${tmp_h} ${tmp_cpp} ${handle_h} ${handle_pp})
-	else()
-		add_executable(${name} ${tmp_cpp} ${handle_pp})
-	endif(WIN32)
-	add_dependencies(${name} muggleCC glog uWS latency_common_cpp)
-	target_include_directories(${name}
-		PRIVATE 
-		${OPENSSL_INCLUDE_DIR}
-		${ZLIB_INCLUDE_DIR}
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/libuv/include
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets/src
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/src
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/rapidjson/include
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/google/glog/src
-		${CMAKE_BINARY_DIR}/thirdparty/google/glog/
-		${CMAKE_CURRENT_LIST_DIR}/thirdparty/muggleCC
-		${CMAKE_CURRENT_LIST_DIR}/src
-	)
-	target_link_libraries(${name} muggleCC glog uWS latency_common_cpp)
-endfunction(add_ws)
-
 # benchmark
-if (NOT ${MUGGLE_BUILD_ONLY_C})
-	SUBDIRLIST(benchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/src/benchmark)
-	FOREACH(subdir ${benchmark_root_dir})
-		add_benchmark(${subdir} ${CMAKE_CURRENT_LIST_DIR}/src/benchmark/${subdir})
-	ENDFOREACH()
-endif()
-
-# ws trans
-add_ws(ws_trans_server_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_server)
-add_ws(ws_trans_client_cpp ${CMAKE_CURRENT_LIST_DIR}/src/ws_trans/ws_trans_client)
-set_target_properties(ws_trans_server_cpp ws_trans_client_cpp
-	PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
-)
-
+SUBDIRLIST(benchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/benchmark)
+FOREACH(subdir ${benchmark_root_dir})
+	add_benchmark(${subdir} ${CMAKE_CURRENT_LIST_DIR}/benchmark/${subdir})
+ENDFOREACH()
