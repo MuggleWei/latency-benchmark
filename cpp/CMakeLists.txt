@@ -127,6 +127,7 @@ function(add_benchmark name folder)
 	add_dependencies(${name} ${benchmark} ${mugglecpp})
 	target_link_libraries(${name} ${benchmark} ${mugglecpp})
 	target_include_directories(${name} PRIVATE
+		${FETCHCONTENT_BASE_DIR}/mugglec-src
 		${FETCHCONTENT_BASE_DIR}/mugglecpp-src
 		${FETCHCONTENT_BASE_DIR}/benchmark-src
 	)
