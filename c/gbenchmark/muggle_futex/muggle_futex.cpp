@@ -1,6 +1,8 @@
 #include "benchmark/benchmark.h"
 #include "muggle/c/muggle_c.h"
 
+#if MUGGLE_SUPPORT_FUTEX
+
 class MuggleMutexFixture : public benchmark::Fixture
 {
 public:
@@ -28,10 +30,11 @@ BENCHMARK_DEFINE_F(MuggleMutexFixture, LockUnLock)(benchmark::State &state)
 		muggle_futex_wake_one(&futex);
 	}
 }
-
 BENCHMARK_REGISTER_F(MuggleMutexFixture, LockUnLock)->Threads(1);
 BENCHMARK_REGISTER_F(MuggleMutexFixture, LockUnLock)->Threads(2);
 BENCHMARK_REGISTER_F(MuggleMutexFixture, LockUnLock)->Threads(4);
 BENCHMARK_REGISTER_F(MuggleMutexFixture, LockUnLock)->Threads(8);
+
+#endif
 
 BENCHMARK_MAIN();
