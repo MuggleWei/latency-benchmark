@@ -98,10 +98,10 @@ set(mugglec mugglec)
 set(benchmark benchmark)
 
 # functions
-function(add_benchmark name folder)
-	message("add benchmark ${name} ${folder}")
+function(add_gbenchmark name folder)
+	message("add google benchmark ${name} ${folder}")
 	
-	set(name benchmark_${name})
+	set(name gbenchmark_${name})
 
 	file(GLOB tmp_h ${folder}/*.h)
 	file(GLOB tmp_c ${folder}/*.c)
@@ -126,8 +126,8 @@ function(add_benchmark name folder)
 	)
 endfunction()
 
-# benchmark
-SUBDIRLIST(benchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/benchmark)
-FOREACH(subdir ${benchmark_root_dir})
-	add_benchmark(${subdir} ${CMAKE_CURRENT_LIST_DIR}/benchmark/${subdir})
+# google benchmark
+SUBDIRLIST(gbenchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/gbenchmark)
+FOREACH(subdir ${gbenchmark_root_dir})
+	add_gbenchmark(${subdir} ${CMAKE_CURRENT_LIST_DIR}/gbenchmark/${subdir})
 ENDFOREACH()
