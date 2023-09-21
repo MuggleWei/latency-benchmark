@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.17.6)
 project(latency-benchmark)
+
+################################
+# general config
+################################
 
 # set compile parameter
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
@@ -9,6 +13,8 @@ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS=1 -D_UNICODE -DUNICODE)
 	# add_definitions(-DNOMINMAX) # for fix std::max conflict in windows
+	add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+	add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif()
 
 # set output dir
@@ -24,78 +30,68 @@ endif()
 # set use folder in vs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# set fetch content base dir
-set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
+################################
+# options
+################################
+
+option(BUILD_SANITIZER "Compile mugglec with sanitizer" OFF)
+
+if (BUILD_SANITIZER)
+	if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
+		(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+		add_compile_options(
+			-fsanitize=undefined
+			-fsanitize=address
+			-fsanitize=leak)
+		add_link_options(
+			-fsanitize=undefined
+			-fsanitize=address
+			-fsanitize=leak)
+	endif()
+endif()
 
 ################################
+# deps
+################################
+
+include(FetchContent)
+set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
+
 # mugglec
+message("# fetch mugglec")
 
-# Download and unpack mugglec at configure time
-configure_file(
-	${CMAKE_CURRENT_LIST_DIR}/cmake/mugglec.cmake.in
-	${FETCHCONTENT_BASE_DIR}/mugglec-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglec-download)
-if (result)
-	message(FATAL_ERROR "cmake step for mugglec failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglec-download)
-if (result)
-	message(FATAL_ERROR "build step for mugglec failed: ${result}")
-endif()
-
-# set mugglec compile options
 set(MUGGLE_BUILD_TRACE OFF CACHE BOOL "")
 set(MUGGLE_BUILD_SHARED_LIB ON CACHE BOOL "")
 set(MUGGLE_BUILD_STATIC_PIC ON CACHE BOOL "")
-set(MUGGLE_BUILD_BENCHMARK ON CACHE BOOL "")
+set(MUGGLE_BUILD_BENCHMARK OFF CACHE BOOL "")
 set(MUGGLE_BUILD_TESTING OFF CACHE BOOL "")
 set(MUGGLE_BUILD_EXAMPLE OFF CACHE BOOL "")
 
-# add mugglec to build
-add_subdirectory(
-	${FETCHCONTENT_BASE_DIR}/mugglec-src
-	${FETCHCONTENT_BASE_DIR}/mugglec-build)
+FetchContent_Declare(
+	mugglec
+	GIT_REPOSITORY https://github.com/MuggleWei/mugglec.git
+	GIT_TAG v1.3.2
+	GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(mugglec)
 
-################################
 # google/benchmark
-
-configure_file(
-	${CMAKE_CURRENT_LIST_DIR}/cmake/benchmark.cmake.in
-	${FETCHCONTENT_BASE_DIR}/benchmark-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/benchmark-download)
-if (result)
-	message(FATAL_ERROR "cmake step for benchmark failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/benchmark-download)
-if (result)
-	message(FATAL_ERROR "build step for benchmark failed: ${result}")
-endif()
+message("# fetch google/benchmark")
 
 set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "")
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "")
 
-# add benchmark to build
-add_subdirectory(
-	${FETCHCONTENT_BASE_DIR}/benchmark-src
-	${FETCHCONTENT_BASE_DIR}/benchmark-build
+FetchContent_Declare(
+	benchmark
+	GIT_REPOSITORY https://github.com/google/benchmark.git
+	GIT_TAG v1.8.3
+	GIT_SHALLOW TRUE
 )
+FetchContent_MakeAvailable(benchmark)
 
 ################################
 # projects
-
-# cmake
-include(${FETCHCONTENT_BASE_DIR}/mugglec-src/cmake/muggle_utils.cmake)
-
-set(mugglec mugglec)
-set(benchmark benchmark)
+################################
 
 # functions
 function(add_gbenchmark name folder)
@@ -118,16 +114,12 @@ function(add_gbenchmark name folder)
 	else()
 		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
 	endif(WIN32)
-	add_dependencies(${name} ${benchmark} ${mugglec})
-	target_link_libraries(${name} ${benchmark} ${mugglec})
+	add_dependencies(${name} benchmark)
+	target_link_libraries(${name} benchmark)
 	target_include_directories(${name} PRIVATE
-		${FETCHCONTENT_BASE_DIR}/mugglec-src
 		${FETCHCONTENT_BASE_DIR}/benchmark-src
 	)
 endfunction()
 
-# google benchmark
-SUBDIRLIST(gbenchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/gbenchmark)
-FOREACH(subdir ${gbenchmark_root_dir})
-	add_gbenchmark(${subdir} ${CMAKE_CURRENT_LIST_DIR}/gbenchmark/${subdir})
-ENDFOREACH()
+# google benchmark - std
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/gbenchmark/std)
