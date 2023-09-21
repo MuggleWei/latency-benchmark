@@ -8,6 +8,10 @@ compile_commands.json
 
 # clangd
 .clangd
+.cache/
+
+# clang-format
+.clang-format
 
 # vscode
 .vscode/

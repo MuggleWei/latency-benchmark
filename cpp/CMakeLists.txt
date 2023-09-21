@@ -72,6 +72,7 @@ FetchContent_Declare(
 	GIT_REPOSITORY https://github.com/MuggleWei/mugglec.git
 	GIT_TAG v1.3.2
 	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(mugglec)
 
@@ -86,6 +87,7 @@ FetchContent_Declare(
 	GIT_REPOSITORY https://github.com/google/benchmark.git
 	GIT_TAG v1.8.3
 	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(benchmark)
 
@@ -123,3 +125,6 @@ endfunction()
 
 # google benchmark - std
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/gbenchmark/std)
+
+# google benchmark - log
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/gbenchmark/log_libs)
