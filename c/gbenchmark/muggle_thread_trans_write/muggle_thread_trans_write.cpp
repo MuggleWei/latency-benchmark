@@ -26,8 +26,8 @@ public:
 
 		muggle_spinlock_init(&spinlock);
 		muggle_mutex_init(&mtx);
-#if MUGGLE_SUPPORT_FUTEX
-		muggle_futex_init(&futex);
+#if MUGGLE_C_HAVE_SYNC_OBJ
+		muggle_synclock_init(&sync);
 #endif
 	}
 
@@ -49,9 +49,11 @@ public:
 	muggle_atomic_int cursor;
 	muggle_atomic_int next;
 
-	muggle_atomic_int spinlock;
+	muggle_spinlock_t spinlock;
 	muggle_mutex_t mtx;
-	muggle_atomic_int futex;
+#if MUGGLE_C_HAVE_SYNC_OBJ
+	muggle_sync_t sync;
+#endif
 };
 
 BENCHMARK_DEFINE_F(ThreadTransWriteFixture, Single)(benchmark::State &state)
@@ -91,22 +93,21 @@ BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Mutex)->Threads(2);
 BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Mutex)->Threads(4);
 BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Mutex)->Threads(8);
 
-#if MUGGLE_SUPPORT_FUTEX
+#if MUGGLE_C_HAVE_SYNC_OBJ
 
-BENCHMARK_DEFINE_F(ThreadTransWriteFixture, Futex)(benchmark::State &state)
+BENCHMARK_DEFINE_F(ThreadTransWriteFixture, Sync)(benchmark::State &state)
 {
 	for (auto _ : state)
 	{
-		muggle_futex_lock(&futex);
+		muggle_synclock_lock(&sync);
 		AsignInLock();
-		muggle_futex_unlock(&futex);
-		muggle_futex_wake_one(&futex);
+		muggle_synclock_unlock(&sync);
 	}
 }
-BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Futex)->Threads(1);
-BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Futex)->Threads(2);
-BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Futex)->Threads(4);
-BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Futex)->Threads(8);
+BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Sync)->Threads(1);
+BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Sync)->Threads(2);
+BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Sync)->Threads(4);
+BENCHMARK_REGISTER_F(ThreadTransWriteFixture, Sync)->Threads(8);
 
 #endif
 

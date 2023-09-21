@@ -15,7 +15,7 @@ public:
 
 public:
 	int ival;
-	muggle_atomic_int spinlock;
+	muggle_spinlock_t spinlock;
 };
 
 BENCHMARK_DEFINE_F(MuggleSpinLockFixture, LockUnLock)(benchmark::State &state)

@@ -1,5 +1,9 @@
-cmake_minimum_required (VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.17.6)
 project(latency_benchmark_c)
+
+################################
+# general config
+################################
 
 # set compile parameter
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
@@ -8,6 +12,8 @@ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Wno-missing-field-initializers")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS=1 -D_UNICODE -DUNICODE)
+	add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+	add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif()
 
 # set standard and print features
@@ -27,30 +33,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # set use folder in vs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# set fetch content base dir
+################################
+# deps
+################################
+
+include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
 
-################################
 # mugglec
+message("# fetch mugglec")
 
-# Download and unpack mugglec at configure time
-configure_file(
-	${CMAKE_CURRENT_LIST_DIR}/cmake/mugglec.cmake.in
-	${FETCHCONTENT_BASE_DIR}/mugglec-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglec-download)
-if (result)
-	message(FATAL_ERROR "cmake step for mugglec failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/mugglec-download)
-if (result)
-	message(FATAL_ERROR "build step for mugglec failed: ${result}")
-endif()
-
-# set mugglec compile options
 set(MUGGLE_BUILD_TRACE OFF CACHE BOOL "")
 set(MUGGLE_BUILD_SHARED_LIB ON CACHE BOOL "")
 set(MUGGLE_BUILD_STATIC_PIC ON CACHE BOOL "")
@@ -58,41 +50,34 @@ set(MUGGLE_BUILD_BENCHMARK ON CACHE BOOL "")
 set(MUGGLE_BUILD_TESTING OFF CACHE BOOL "")
 set(MUGGLE_BUILD_EXAMPLE OFF CACHE BOOL "")
 
-# add mugglec to build
-add_subdirectory(
-	${FETCHCONTENT_BASE_DIR}/mugglec-src
-	${FETCHCONTENT_BASE_DIR}/mugglec-build)
+FetchContent_Declare(
+	mugglec
+	GIT_REPOSITORY https://github.com/MuggleWei/mugglec.git
+	GIT_TAG v1.3.2
+	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(mugglec)
 
-################################
 # google/benchmark
-
-configure_file(
-	${CMAKE_CURRENT_LIST_DIR}/cmake/benchmark.cmake.in
-	${FETCHCONTENT_BASE_DIR}/benchmark-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/benchmark-download)
-if (result)
-	message(FATAL_ERROR "cmake step for benchmark failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${FETCHCONTENT_BASE_DIR}/benchmark-download)
-if (result)
-	message(FATAL_ERROR "build step for benchmark failed: ${result}")
-endif()
+message("# fetch google/benchmark")
 
 set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "")
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "")
 
-# add benchmark to build
-add_subdirectory(
-	${FETCHCONTENT_BASE_DIR}/benchmark-src
-	${FETCHCONTENT_BASE_DIR}/benchmark-build
+FetchContent_Declare(
+	benchmark
+	GIT_REPOSITORY https://github.com/google/benchmark.git
+	GIT_TAG v1.8.3
+	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
 )
+FetchContent_MakeAvailable(benchmark)
+
 
 ################################
 # projects
+################################
 
 # cmake
 include(${FETCHCONTENT_BASE_DIR}/mugglec-src/cmake/muggle_utils.cmake)
