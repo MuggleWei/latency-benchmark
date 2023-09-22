@@ -36,20 +36,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 option(BUILD_SANITIZER "Compile mugglec with sanitizer" OFF)
 
-if (BUILD_SANITIZER)
-	if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
-		(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
-		add_compile_options(
-			-fsanitize=undefined
-			-fsanitize=address
-			-fsanitize=leak)
-		add_link_options(
-			-fsanitize=undefined
-			-fsanitize=address
-			-fsanitize=leak)
-	endif()
-endif()
-
 ################################
 # deps
 ################################
@@ -75,6 +61,20 @@ FetchContent_Declare(
 	GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(mugglec)
+
+if (BUILD_SANITIZER)
+	if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
+		(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+		target_compile_options(mugglec PUBLIC
+			-fsanitize=undefined
+			-fsanitize=address
+			-fsanitize=leak)
+		target_link_options(mugglec PUBLIC
+			-fsanitize=undefined
+			-fsanitize=address
+			-fsanitize=leak)
+	endif()
+endif()
 
 # google/benchmark
 message("# fetch google/benchmark")

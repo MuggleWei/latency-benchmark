@@ -36,8 +36,8 @@ BENCHMARK_DEFINE_F(NanologBasicFixture, sync)(benchmark::State &state)
 	for (auto _ : state) {
 		for (LogMsg &msg : log_msgs) {
 			NANO_LOG(NOTICE, "u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s",
-						(unsigned long long)msg.u64, (long long)msg.i64,
-						(unsigned long)msg.u32, (long)msg.i32, msg.s);
+					 (unsigned long long)msg.u64, (long long)msg.i64,
+					 (unsigned long)msg.u32, (long)msg.i32, msg.s);
 		}
 	}
 }

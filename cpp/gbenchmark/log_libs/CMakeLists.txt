@@ -19,6 +19,46 @@ function(add_log_gbenchmark name folder)
 		${CMAKE_CURRENT_LIST_DIR}/log_msg)
 endfunction()
 
+function(add_pprof name folder)
+	message("add pprof ${name} ${folder}")
+	
+	set(name pprof_${name})
+
+	file(GLOB tmp_h ${folder}/*.h)
+	file(GLOB tmp_c ${folder}/*.c)
+	file(GLOB tmp_cpp ${folder}/*.cpp)
+	file(GLOB tmp_cc ${folder}/*.cc)
+
+	if (WIN32)
+		add_executable(${name} ${tmp_h} ${tmp_c} ${tmp_cpp} ${tmp_cc})
+		set_target_properties(${name}
+			PROPERTIES
+			FOLDER "pprof"
+			VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+		)
+	else()
+		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
+	endif(WIN32)
+	add_dependencies(${name} log_msg)
+	target_link_libraries(${name} log_msg)
+	target_include_directories(${name} PUBLIC
+		${CMAKE_CURRENT_LIST_DIR}/log_msg)
+
+	if (BUILD_SANITIZER)
+		if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
+			(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+			target_compile_options(${name} PUBLIC
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize=leak)
+			target_link_options(${name} PUBLIC
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize=leak)
+		endif()
+	endif()
+endfunction()
+
 # mugglec log
 if (benchmark_mugglec_log)
 	add_log_gbenchmark(mugglec_log_sync ${CMAKE_CURRENT_LIST_DIR}/mugglec_log_sync)
@@ -32,6 +72,13 @@ if (benchmark_mugglec_log)
 	add_dependencies(gbenchmark_mugglec_log_async mugglec)
 	target_link_libraries(gbenchmark_mugglec_log_async mugglec)
 	target_include_directories(gbenchmark_mugglec_log_async PUBLIC
+		${FETCHCONTENT_BASE_DIR}/mugglec-src
+		${FETCHCONTENT_BASE_DIR}/mugglec-build/generated)
+
+	add_pprof(mugglec_log_sync ${CMAKE_CURRENT_LIST_DIR}/pprof/mugglec_log_sync)
+	add_dependencies(pprof_mugglec_log_sync mugglec)
+	target_link_libraries(pprof_mugglec_log_sync mugglec)
+	target_include_directories(pprof_mugglec_log_sync PUBLIC
 		${FETCHCONTENT_BASE_DIR}/mugglec-src
 		${FETCHCONTENT_BASE_DIR}/mugglec-build/generated)
 endif()
@@ -48,6 +95,20 @@ if (benchmark_spdlog)
 		)
 	FetchContent_MakeAvailable(spdlog)
 
+	if (BUILD_SANITIZER)
+		if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
+			(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+			target_compile_options(spdlog PUBLIC
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize=leak)
+			target_link_options(spdlog PUBLIC
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize=leak)
+		endif()
+	endif()
+
 	add_log_gbenchmark(spdlog_basic ${CMAKE_CURRENT_LIST_DIR}/spdlog_basic)
 	add_dependencies(gbenchmark_spdlog_basic spdlog)
 	target_link_libraries(gbenchmark_spdlog_basic spdlog)
@@ -55,6 +116,10 @@ if (benchmark_spdlog)
 	add_log_gbenchmark(spdlog_async ${CMAKE_CURRENT_LIST_DIR}/spdlog_async)
 	add_dependencies(gbenchmark_spdlog_async spdlog)
 	target_link_libraries(gbenchmark_spdlog_async spdlog)
+
+	add_pprof(spdlog_basic ${CMAKE_CURRENT_LIST_DIR}/pprof/spdlog_basic)
+	add_dependencies(pprof_spdlog_basic spdlog)
+	target_link_libraries(pprof_spdlog_basic spdlog)
 endif()
 
 # nano log
@@ -91,4 +156,24 @@ if (benchmark_nanolog)
 	add_dependencies(gbenchmark_nanolog_basic nanolog_lib)
 	target_link_libraries(gbenchmark_nanolog_basic nanolog_lib)
 	target_include_directories(gbenchmark_nanolog_basic PUBLIC ${FETCHCONTENT_BASE_DIR}/nanolog-src/runtime)
+
+	add_pprof(nanolog_basic ${CMAKE_CURRENT_LIST_DIR}/pprof/nanolog_basic)
+	add_dependencies(pprof_nanolog_basic nanolog_lib)
+	target_link_libraries(pprof_nanolog_basic nanolog_lib)
+	target_include_directories(pprof_nanolog_basic PUBLIC ${FETCHCONTENT_BASE_DIR}/nanolog-src/runtime)
 endif()
+
+# copy pprof.sh
+file(GLOB_RECURSE scripts "${CMAKE_CURRENT_LIST_DIR}/pprof/*.sh")
+foreach(script ${scripts})
+	file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_LIST_DIR}/pprof ${script})
+	set(dst_file "${CMAKE_CURRENT_LIST_DIR}/build/${rel_path}")
+	add_custom_command(
+		OUTPUT "${dst_file}"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${script}" "${CMAKE_BINARY_DIR}/"
+		DEPENDS "${script}"
+		COMMENT "copy ${script} to ${dst_file}"
+		)
+	list(APPEND dst_files "${dst_file}")
+endforeach()
+add_custom_target(COPY_SCRIPTS ALL DEPENDS ${dst_files})
