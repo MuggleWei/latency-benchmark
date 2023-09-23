@@ -50,6 +50,14 @@ BENCHMARK_DEFINE_F(SpdlogAsyncFixture, async)(benchmark::State &state)
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(1);
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(8);
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(16);
-BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(32);
+
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
+				  (std::thread::hardware_concurrency() / 2) :
+				  1);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads(std::thread::hardware_concurrency());
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads(std::thread::hardware_concurrency() * 2);
 
 BENCHMARK_MAIN();

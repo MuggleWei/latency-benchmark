@@ -44,6 +44,14 @@ BENCHMARK_DEFINE_F(NanologBasicFixture, sync)(benchmark::State &state)
 BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(1);
 BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(8);
 BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(16);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(32);
+
+BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
+				  (std::thread::hardware_concurrency() / 2) :
+				  1);
+BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+	->Threads(std::thread::hardware_concurrency());
+BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+	->Threads(std::thread::hardware_concurrency() * 2);
 
 BENCHMARK_MAIN();
