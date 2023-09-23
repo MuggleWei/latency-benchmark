@@ -10,6 +10,16 @@ using namespace NanoLog::LogLevels;
 
 std::once_flag init_flag;
 
+#define LOG_FUNC(num)                                                       \
+	void log_func##num(LogMsg &msg)                                         \
+	{                                                                       \
+		NANO_LOG(NOTICE, "u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s", \
+				 (unsigned long long)msg.u64, (long long)msg.i64,           \
+				 (unsigned long)msg.u32, (long)msg.i32, msg.s);             \
+	}
+
+EXPAND_FUNCS
+
 class NanologBasicFixture : public benchmark::Fixture {
 public:
 	NanologBasicFixture()
@@ -33,11 +43,10 @@ public:
 
 BENCHMARK_DEFINE_F(NanologBasicFixture, sync)(benchmark::State &state)
 {
+	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
 		for (LogMsg &msg : log_msgs) {
-			NANO_LOG(NOTICE, "u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s",
-					 (unsigned long long)msg.u64, (long long)msg.i64,
-					 (unsigned long)msg.u32, (long)msg.i32, msg.s);
+			log_funcs[msg.i32 % nfuncs](msg);
 		}
 	}
 }

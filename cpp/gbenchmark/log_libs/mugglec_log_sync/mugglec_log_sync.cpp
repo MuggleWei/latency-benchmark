@@ -10,6 +10,16 @@
 
 std::once_flag init_flag;
 
+#define LOG_FUNC(num)                                               \
+	void log_func##num(LogMsg &msg)                                 \
+	{                                                               \
+		LOG_INFO("u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s", \
+				 (unsigned long long)msg.u64, (long long)msg.i64,   \
+				 (unsigned long)msg.u32, (long)msg.i32, msg.s);     \
+	}
+
+EXPAND_FUNCS
+
 class MuggleclogSyncFixture : public benchmark::Fixture {
 public:
 	MuggleclogSyncFixture()
@@ -29,11 +39,10 @@ public:
 
 BENCHMARK_DEFINE_F(MuggleclogSyncFixture, sync)(benchmark::State &state)
 {
+	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
 		for (LogMsg &msg : log_msgs) {
-			LOG_INFO("u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s",
-					 (unsigned long long)msg.u64, (long long)msg.i64,
-					 (unsigned long)msg.u32, (long)msg.i32, msg.s);
+			log_funcs[msg.i32 % nfuncs](msg);
 		}
 	}
 }

@@ -10,6 +10,19 @@
 
 std::once_flag init_flag;
 
+muggle_logger_t *s_logger = nullptr;
+
+#define LOG_FUNC(num)                                                 \
+	void log_func##num(LogMsg &msg)                                   \
+	{                                                                 \
+		MUGGLE_LOG(s_logger, LOG_LEVEL_DEBUG,                         \
+				   "u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s", \
+				   (unsigned long long)msg.u64, (long long)msg.i64,   \
+				   (unsigned long)msg.u32, (long)msg.i32, msg.s);     \
+	}
+
+EXPAND_FUNCS
+
 muggle_logger_t *my_async_logger()
 {
 	static muggle_async_logger_t async_logger;
@@ -35,6 +48,8 @@ public:
 			muggle_logger_t *logger = my_async_logger();
 			muggle_async_logger_init((muggle_async_logger_t *)logger, 4096);
 			logger->add_handler(logger, (muggle_log_handler_t *)&file_handler);
+
+			s_logger = my_async_logger();
 		});
 	}
 
@@ -44,13 +59,10 @@ public:
 
 BENCHMARK_DEFINE_F(MuggleclogAsyncFixture, sync)(benchmark::State &state)
 {
-	muggle_logger_t *logger = my_async_logger();
+	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
 		for (LogMsg &msg : log_msgs) {
-			MUGGLE_LOG(logger, LOG_LEVEL_DEBUG,
-					   "u64: %llu, i64: %lld, u32: %lu, i32: %ld, s: %s",
-					   (unsigned long long)msg.u64, (long long)msg.i64,
-					   (unsigned long)msg.u32, (long)msg.i32, msg.s);
+			log_funcs[msg.i32 % nfuncs](msg);
 		}
 	}
 }

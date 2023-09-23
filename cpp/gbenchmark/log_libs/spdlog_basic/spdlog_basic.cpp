@@ -8,6 +8,16 @@
 
 std::once_flag init_flag;
 
+#define LOG_FUNC(num)                                                \
+	void log_func##num(LogMsg &msg)                                  \
+	{                                                                \
+		SPDLOG_INFO("u64: {}, i64: {}, u32: {}, i32: {}, s: {}",     \
+					(unsigned long long)msg.u64, (long long)msg.i64, \
+					(unsigned long)msg.u32, (long)msg.i32, msg.s);   \
+	}
+
+EXPAND_FUNCS
+
 class SpdlogBasicFixture : public benchmark::Fixture {
 public:
 	SpdlogBasicFixture()
@@ -38,11 +48,10 @@ public:
 
 BENCHMARK_DEFINE_F(SpdlogBasicFixture, basic)(benchmark::State &state)
 {
+	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
 		for (LogMsg &msg : log_msgs) {
-			SPDLOG_INFO("u64: {}, i64: {}, u32: {}, i32: {}, s: {}",
-						(unsigned long long)msg.u64, (long long)msg.i64,
-						(unsigned long)msg.u32, (long)msg.i32, msg.s);
+			log_funcs[msg.i32 % nfuncs](msg);
 		}
 	}
 }
