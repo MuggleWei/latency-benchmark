@@ -128,7 +128,7 @@ if (benchmark_nanolog)
 	FetchContent_Declare(
 		nanolog
 		GIT_REPOSITORY https://github.com/PlatformLab/NanoLog.git
-		GIT_TAG master
+		GIT_TAG "2a94d70f9d1db4da416053b1b926387fa068a59b"
 		GIT_SHALLOW TRUE
 		GIT_PROGRESS TRUE
 		)
