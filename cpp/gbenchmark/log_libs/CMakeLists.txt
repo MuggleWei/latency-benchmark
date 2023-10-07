@@ -2,6 +2,7 @@
 set(benchmark_mugglec_log ON CACHE BOOL "generate mugglec log benchmark")
 set(benchmark_spdlog ON CACHE BOOL "generate spdlog benchmark")
 set(benchmark_nanolog ON CACHE BOOL "generate nanolog benchmark")
+set(benchmark_haclog ON CACHE BOOL "generate haclog benchmark")
 
 # log message
 FILE(GLOB_RECURSE log_msg_h "${CMAKE_CURRENT_LIST_DIR}/log_msg/*.h")
@@ -161,6 +162,37 @@ if (benchmark_nanolog)
 	add_dependencies(pprof_nanolog_basic nanolog_lib)
 	target_link_libraries(pprof_nanolog_basic nanolog_lib)
 	target_include_directories(pprof_nanolog_basic PUBLIC ${FETCHCONTENT_BASE_DIR}/nanolog-src/runtime)
+endif()
+
+# haclog
+if (benchmark_haclog)
+	message("# fetch haclog")
+	FetchContent_Declare(
+		haclog
+		GIT_REPOSITORY https://github.com/MuggleWei/haclog.git
+		GIT_TAG "dcb67bfdf4b1f1eeec80acc86edbc24858e7280a"
+		GIT_SHALLOW TRUE
+		GIT_PROGRESS TRUE
+		)
+	FetchContent_MakeAvailable(haclog)
+
+	if (BUILD_SANITIZER)
+		if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
+			(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+			target_compile_options(haclog PUBLIC
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize=leak)
+			target_link_options(haclog PUBLIC
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize=leak)
+		endif()
+	endif()
+
+	add_log_gbenchmark(haclog_basic ${CMAKE_CURRENT_LIST_DIR}/haclog_basic)
+	add_dependencies(gbenchmark_haclog_basic haclog)
+	target_link_libraries(gbenchmark_haclog_basic haclog)
 endif()
 
 # copy pprof.sh
