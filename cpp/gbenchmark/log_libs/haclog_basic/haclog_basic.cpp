@@ -39,6 +39,8 @@ public:
 									 HACLOG_LEVEL_DEBUG);
 			haclog_context_add_handler((haclog_handler_t *)&file_handler);
 
+			haclog_context_set_bytes_buf_size(8 * 1024 * 1024);
+
 			haclog_backend_run();
 			HACLOG_INFO("init success");
 		});
@@ -48,7 +50,7 @@ public:
 
 	void TearDown(const benchmark::State &)
 	{
-		haclog_thread_context_cleanup();
+		// haclog_thread_context_cleanup();
 	}
 
 public:
@@ -57,11 +59,11 @@ public:
 
 BENCHMARK_DEFINE_F(HaclogBasicFixture, basic)(benchmark::State &state)
 {
+	static thread_local int idx = 0;
 	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
-		for (LogMsg &msg : log_msgs) {
-			log_funcs[msg.i32 % nfuncs](msg);
-		}
+		idx = (idx + 1) % nfuncs;
+		log_funcs[idx](log_msgs[idx]);
 	}
 }
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(1);

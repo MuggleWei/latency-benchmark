@@ -48,11 +48,11 @@ public:
 
 BENCHMARK_DEFINE_F(SpdlogBasicFixture, basic)(benchmark::State &state)
 {
+	static thread_local int idx = 0;
 	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
-		for (LogMsg &msg : log_msgs) {
-			log_funcs[msg.i32 % nfuncs](msg);
-		}
+		idx = (idx + 1) % nfuncs;
+		log_funcs[idx](log_msgs[idx]);
 	}
 }
 BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)->Threads(1);
