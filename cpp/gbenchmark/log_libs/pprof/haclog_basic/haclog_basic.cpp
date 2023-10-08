@@ -5,6 +5,9 @@
 #include "log_msg.h"
 #include "haclog/haclog.h"
 
+#define MSG_CNT 10000
+#define NUM_THREAD 16
+
 int main()
 {
 	static haclog_file_handler_t file_handler = {};
@@ -17,13 +20,13 @@ int main()
 	haclog_context_add_handler((haclog_handler_t *)&file_handler);
 	haclog_backend_run();
 
-	int cnt = 10000;
+	int cnt = MSG_CNT;
 	std::vector<LogMsg> log_msgs;
 	GenLogMsgArray(cnt, log_msgs);
 
 	std::vector<std::thread> ths;
-	double elapsed_arr[16];
-	for (int i = 0; i < 16; i++) {
+	double elapsed_arr[NUM_THREAD];
+	for (int i = 0; i < NUM_THREAD; i++) {
 		ths.push_back(std::thread([&log_msgs, &elapsed_arr, cnt, i] {
 			haclog_thread_context_init();
 
@@ -47,7 +50,7 @@ int main()
 		th.join();
 	}
 
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < NUM_THREAD; i++) {
 		printf("avg elapsed: %.3f ns\n", elapsed_arr[i]);
 	}
 

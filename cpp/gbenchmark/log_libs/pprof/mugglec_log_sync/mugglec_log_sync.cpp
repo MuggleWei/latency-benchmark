@@ -4,17 +4,20 @@
 #include "muggle/c/muggle_c.h"
 #include "log_msg.h"
 
+#define MSG_CNT 10000
+#define NUM_THREAD 16
+
 int main()
 {
 	muggle_log_simple_init(-1, LOG_LEVEL_DEBUG);
 
-	int cnt = 10000;
+	int cnt = MSG_CNT;
 	std::vector<LogMsg> log_msgs;
 	GenLogMsgArray(cnt, log_msgs);
 
 	std::vector<std::thread> ths;
-	double elapsed_arr[16];
-	for (int i = 0; i < 16; i++) {
+	double elapsed_arr[NUM_THREAD];
+	for (int i = 0; i < NUM_THREAD; i++) {
 		ths.push_back(std::thread([&log_msgs, &elapsed_arr, cnt, i] {
 			struct timespec ts1, ts2;
 			timespec_get(&ts1, TIME_UTC);
@@ -36,7 +39,7 @@ int main()
 		th.join();
 	}
 
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < NUM_THREAD; i++) {
 		printf("avg elapsed: %.3f ns\n", elapsed_arr[i]);
 	}
 
