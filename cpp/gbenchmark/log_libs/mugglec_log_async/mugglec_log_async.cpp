@@ -8,6 +8,8 @@
 #include "log_msg.h"
 #include "muggle/c/muggle_c.h"
 
+#define ITER_COUNT 10000
+
 std::once_flag init_flag;
 
 muggle_logger_t *s_logger = nullptr;
@@ -66,17 +68,26 @@ BENCHMARK_DEFINE_F(MuggleclogAsyncFixture, sync)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
-BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)->Threads(1);
-BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)->Threads(8);
-BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)->Threads(16);
+BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)
+	->Threads(1)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)
+	->Threads(8)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)
+	->Threads(16)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
-				  1);
+				  1)
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)
-	->Threads(std::thread::hardware_concurrency());
+	->Threads(std::thread::hardware_concurrency())
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(MuggleclogAsyncFixture, sync)
-	->Threads(std::thread::hardware_concurrency() * 2);
+	->Threads(std::thread::hardware_concurrency() * 2)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_MAIN();

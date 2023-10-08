@@ -8,6 +8,8 @@
 #include "NanoLogCpp17.h"
 using namespace NanoLog::LogLevels;
 
+#define ITER_COUNT 10000
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                       \
@@ -31,10 +33,10 @@ public:
 	{
 		std::call_once(init_flag, []() {
 			NanoLog::setLogFile("logs/nanolog_basic.log");
-			NanoLog::preallocate();
 			NanoLog::setLogLevel(NOTICE);
 			NANO_LOG(NOTICE, "init success");
 		});
+		NanoLog::preallocate();
 	}
 
 public:
@@ -50,17 +52,26 @@ BENCHMARK_DEFINE_F(NanologBasicFixture, sync)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(1);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(8);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)->Threads(16);
+BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+	->Threads(1)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+	->Threads(8)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+	->Threads(16)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
-				  1);
+				  1)
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
-	->Threads(std::thread::hardware_concurrency());
+	->Threads(std::thread::hardware_concurrency())
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
-	->Threads(std::thread::hardware_concurrency() * 2);
+	->Threads(std::thread::hardware_concurrency() * 2)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_MAIN();

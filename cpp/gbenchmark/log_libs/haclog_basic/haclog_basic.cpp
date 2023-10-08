@@ -8,6 +8,8 @@
 #include "log_msg.h"
 #include "haclog/haclog.h"
 
+#define ITER_COUNT 10000
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                  \
@@ -50,7 +52,7 @@ public:
 
 	void TearDown(const benchmark::State &)
 	{
-		// haclog_thread_context_cleanup();
+		haclog_thread_context_cleanup();
 	}
 
 public:
@@ -66,17 +68,26 @@ BENCHMARK_DEFINE_F(HaclogBasicFixture, basic)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
-BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(1);
-BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(8);
-BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(16);
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
+	->Threads(1)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
+	->Threads(8)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
+	->Threads(16)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
-				  1);
+				  1)
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
-	->Threads(std::thread::hardware_concurrency());
+	->Threads(std::thread::hardware_concurrency())
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
-	->Threads(std::thread::hardware_concurrency() * 2);
+	->Threads(std::thread::hardware_concurrency() * 2)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_MAIN();

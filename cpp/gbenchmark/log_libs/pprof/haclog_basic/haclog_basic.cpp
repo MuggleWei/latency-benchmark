@@ -1,3 +1,4 @@
+#include "haclog/haclog_thread_context.h"
 #include <stdlib.h>
 #include <array>
 #include <vector>
@@ -43,6 +44,8 @@ int main()
 			unsigned long elapsed = (ts2.tv_sec - ts1.tv_sec) * 1000000000 +
 									ts2.tv_nsec - ts1.tv_nsec;
 			elapsed_arr[i] = (double)elapsed / cnt;
+
+			haclog_thread_context_cleanup();
 		}));
 	}
 

@@ -7,6 +7,8 @@
 #include "spdlog/async.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
+#define ITER_COUNT 10000
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                \
@@ -56,17 +58,26 @@ BENCHMARK_DEFINE_F(SpdlogAsyncFixture, async)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
-BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(1);
-BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(8);
-BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(16);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads(1)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads(8)
+	->Iterations(ITER_COUNT);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads(16)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
-				  1);
+				  1)
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
-	->Threads(std::thread::hardware_concurrency());
+	->Threads(std::thread::hardware_concurrency())
+	->Iterations(ITER_COUNT);
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
-	->Threads(std::thread::hardware_concurrency() * 2);
+	->Threads(std::thread::hardware_concurrency() * 2)
+	->Iterations(ITER_COUNT);
 
 BENCHMARK_MAIN();

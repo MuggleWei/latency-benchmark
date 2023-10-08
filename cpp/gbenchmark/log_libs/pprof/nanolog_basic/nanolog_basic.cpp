@@ -10,7 +10,6 @@ using namespace NanoLog::LogLevels;
 int main()
 {
 	NanoLog::setLogFile("logs/nanolog_basic.log");
-	NanoLog::preallocate();
 	NanoLog::setLogLevel(NOTICE);
 	NANO_LOG(NOTICE, "init success");
 
@@ -22,6 +21,8 @@ int main()
 	double elapsed_arr[NUM_THREAD];
 	for (int i = 0; i < NUM_THREAD; i++) {
 		ths.push_back(std::thread([&log_msgs, &elapsed_arr, cnt, i] {
+			NanoLog::preallocate();
+
 			struct timespec ts1, ts2;
 			timespec_get(&ts1, TIME_UTC);
 
