@@ -170,7 +170,7 @@ if (benchmark_haclog)
 	FetchContent_Declare(
 		haclog
 		GIT_REPOSITORY https://github.com/MuggleWei/haclog.git
-		GIT_TAG "dcb67bfdf4b1f1eeec80acc86edbc24858e7280a"
+		GIT_TAG "0733ff90a3f9bd3e5aee088c39b8425d3427dc71"
 		GIT_SHALLOW TRUE
 		GIT_PROGRESS TRUE
 		)
