@@ -14,3 +14,4 @@ run() {
 run mugglec_log_sync
 run spdlog_basic
 run nanolog_basic
+run haclog_basic

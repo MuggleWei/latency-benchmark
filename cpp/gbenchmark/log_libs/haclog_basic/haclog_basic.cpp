@@ -42,6 +42,13 @@ public:
 			haclog_backend_run();
 			HACLOG_INFO("init success");
 		});
+
+		haclog_thread_context_init();
+	}
+
+	void TearDown(const benchmark::State &)
+	{
+		haclog_thread_context_cleanup();
 	}
 
 public:
@@ -50,16 +57,12 @@ public:
 
 BENCHMARK_DEFINE_F(HaclogBasicFixture, basic)(benchmark::State &state)
 {
-	haclog_thread_context_init();
-
 	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
 	for (auto _ : state) {
 		for (LogMsg &msg : log_msgs) {
 			log_funcs[msg.i32 % nfuncs](msg);
 		}
 	}
-
-	haclog_thread_context_cleanup();
 }
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(1);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(8);

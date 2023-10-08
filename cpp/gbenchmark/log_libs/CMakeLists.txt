@@ -170,7 +170,7 @@ if (benchmark_haclog)
 	FetchContent_Declare(
 		haclog
 		GIT_REPOSITORY https://github.com/MuggleWei/haclog.git
-		GIT_TAG "0733ff90a3f9bd3e5aee088c39b8425d3427dc71"
+		GIT_TAG "e544e2c97424b007234c3cc620cf29ccc0831800"
 		GIT_SHALLOW TRUE
 		GIT_PROGRESS TRUE
 		)
@@ -193,6 +193,10 @@ if (benchmark_haclog)
 	add_log_gbenchmark(haclog_basic ${CMAKE_CURRENT_LIST_DIR}/haclog_basic)
 	add_dependencies(gbenchmark_haclog_basic haclog)
 	target_link_libraries(gbenchmark_haclog_basic haclog)
+
+	add_pprof(haclog_basic ${CMAKE_CURRENT_LIST_DIR}/pprof/haclog_basic)
+	add_dependencies(pprof_haclog_basic haclog)
+	target_link_libraries(pprof_haclog_basic haclog)
 endif()
 
 # copy pprof.sh
