@@ -3,8 +3,10 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "log_msg.h"
 
-#define MSG_CNT 10000
-#define NUM_THREAD 16
+#define MSG_CNT 5000
+#define NUM_THREAD 8
+#define ROUND 12
+#define ROUND_INTERVAL 1000
 
 int main()
 {
@@ -18,22 +20,27 @@ int main()
 	GenLogMsgArray(cnt, log_msgs);
 
 	std::vector<std::thread> ths;
-	double elapsed_arr[NUM_THREAD];
+	double elapsed_arr[NUM_THREAD * ROUND];
 	for (int i = 0; i < NUM_THREAD; i++) {
 		ths.push_back(std::thread([&log_msgs, &elapsed_arr, cnt, i] {
-			struct timespec ts1, ts2;
-			timespec_get(&ts1, TIME_UTC);
+			for (int r = 0; r < ROUND; r++) {
+				struct timespec ts1, ts2;
+				timespec_get(&ts1, TIME_UTC);
 
-			for (LogMsg &msg : log_msgs) {
-				SPDLOG_INFO("u64: {}, i64: {}, u32: {}, i32: {}, s: {}",
-							(unsigned long long)msg.u64, (long long)msg.i64,
-							(unsigned long)msg.u32, (long)msg.i32, msg.s);
+				for (LogMsg &msg : log_msgs) {
+					SPDLOG_INFO("u64: {}, i64: {}, u32: {}, i32: {}, s: {}",
+								(unsigned long long)msg.u64, (long long)msg.i64,
+								(unsigned long)msg.u32, (long)msg.i32, msg.s);
+				}
+
+				timespec_get(&ts2, TIME_UTC);
+				unsigned long elapsed = (ts2.tv_sec - ts1.tv_sec) * 1000000000 +
+										ts2.tv_nsec - ts1.tv_nsec;
+
+				elapsed_arr[i * ROUND + r] = (double)elapsed / cnt;
+				std::this_thread::sleep_for(
+					std::chrono::nanoseconds(ROUND_INTERVAL));
 			}
-
-			timespec_get(&ts2, TIME_UTC);
-			unsigned long elapsed = (ts2.tv_sec - ts1.tv_sec) * 1000000000 +
-									ts2.tv_nsec - ts1.tv_nsec;
-			elapsed_arr[i] = (double)elapsed / cnt;
 		}));
 	}
 
@@ -42,7 +49,11 @@ int main()
 	}
 
 	for (int i = 0; i < NUM_THREAD; i++) {
-		printf("avg elapsed: %.3f ns\n", elapsed_arr[i]);
+		printf("[%d] elapsed:", i);
+		for (int r = 0; r < ROUND; ++r) {
+			printf(" %8.3f |", elapsed_arr[i * ROUND + r]);
+		}
+		printf("\n");
 	}
 
 	return 0;
