@@ -6,7 +6,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
-#define ITER_COUNT 40000
+#define ITER_COUNT 20000
 
 std::once_flag init_flag;
 

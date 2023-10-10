@@ -8,7 +8,7 @@
 #include "NanoLogCpp17.h"
 using namespace NanoLog::LogLevels;
 
-#define ITER_COUNT 40000
+#define ITER_COUNT 20000
 
 std::once_flag init_flag;
 

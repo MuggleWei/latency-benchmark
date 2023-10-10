@@ -8,7 +8,7 @@
 #include "log_msg.h"
 #include "muggle/c/muggle_c.h"
 
-#define ITER_COUNT 10000
+#define ITER_COUNT 20000
 
 std::once_flag init_flag;
 

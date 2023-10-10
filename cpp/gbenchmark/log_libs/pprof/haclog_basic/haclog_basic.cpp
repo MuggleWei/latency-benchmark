@@ -6,10 +6,16 @@
 #include "log_msg.h"
 #include "haclog/haclog.h"
 
-#define MSG_CNT 5000
-#define NUM_THREAD 8
-#define ROUND 12
-#define ROUND_INTERVAL 1000
+#define TOTAL_PER_ROUND 10000
+static int MSG_CNT = 0;
+static int NUM_THREAD = 0;
+
+// #define TOTAL_PER_ROUND 0
+// static int MSG_CNT = 40000;
+// static int NUM_THREAD = 2;
+
+#define ROUND 16
+#define ROUND_INTERVAL (50 * 1000 * 1000)
 
 int main()
 {
@@ -22,6 +28,11 @@ int main()
 							 HACLOG_LEVEL_DEBUG);
 	haclog_context_add_handler((haclog_handler_t *)&file_handler);
 	haclog_backend_run();
+
+#if TOTAL_PER_ROUND
+	NUM_THREAD = std::thread::hardware_concurrency();
+	MSG_CNT = TOTAL_PER_ROUND / NUM_THREAD;
+#endif
 
 	int cnt = MSG_CNT;
 	std::vector<LogMsg> log_msgs;

@@ -8,7 +8,7 @@
 #include "log_msg.h"
 #include "haclog/haclog.h"
 
-#define ITER_COUNT 40000
+#define ITER_COUNT 20000
 
 std::once_flag init_flag;
 
