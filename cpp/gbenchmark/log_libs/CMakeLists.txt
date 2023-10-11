@@ -114,9 +114,9 @@ if (benchmark_spdlog)
 		endif()
 	endif()
 
-	add_log_gbenchmark(spdlog_basic ${CMAKE_CURRENT_LIST_DIR}/spdlog_basic)
-	add_dependencies(gbenchmark_spdlog_basic spdlog)
-	target_link_libraries(gbenchmark_spdlog_basic spdlog)
+	add_log_gbenchmark(spdlog_sync ${CMAKE_CURRENT_LIST_DIR}/spdlog_sync)
+	add_dependencies(gbenchmark_spdlog_sync spdlog)
+	target_link_libraries(gbenchmark_spdlog_sync spdlog)
 
 	add_log_gbenchmark(spdlog_async ${CMAKE_CURRENT_LIST_DIR}/spdlog_async)
 	add_dependencies(gbenchmark_spdlog_async spdlog)

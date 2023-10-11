@@ -11,6 +11,8 @@ using namespace NanoLog::LogLevels;
 #define ITER_COUNT 10000
 #define REPEAT_COUNT 5
 
+#define MIN_TIME 3.0
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                       \
@@ -44,7 +46,7 @@ public:
 	std::vector<LogMsg> log_msgs;
 };
 
-BENCHMARK_DEFINE_F(NanologBasicFixture, sync)(benchmark::State &state)
+BENCHMARK_DEFINE_F(NanologBasicFixture, basic)(benchmark::State &state)
 {
 	static thread_local int idx = 0;
 	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
@@ -53,30 +55,46 @@ BENCHMARK_DEFINE_F(NanologBasicFixture, sync)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+
+// min time
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)->Threads(1)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)->Threads(2)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
+	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
+				  (std::thread::hardware_concurrency() / 2) :
+				  1)
+	->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
+	->Threads(std::thread::hardware_concurrency() - 1 > 0 ?
+				  (std::thread::hardware_concurrency() - 1) :
+				  1)
+	->MinTime(MIN_TIME);
+
+// iteration * repeat
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
 	->Threads(1)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
 	->Threads(8)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
 	->Threads(16)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
 
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
 				  1)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
 	->Threads(std::thread::hardware_concurrency())
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(NanologBasicFixture, sync)
+BENCHMARK_REGISTER_F(NanologBasicFixture, basic)
 	->Threads(std::thread::hardware_concurrency() * 2)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);

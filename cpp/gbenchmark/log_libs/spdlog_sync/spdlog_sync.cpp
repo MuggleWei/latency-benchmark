@@ -9,6 +9,8 @@
 #define ITER_COUNT 10000
 #define REPEAT_COUNT 5
 
+#define MIN_TIME 3.0
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                \
@@ -21,9 +23,9 @@ std::once_flag init_flag;
 
 EXPAND_FUNCS
 
-class SpdlogBasicFixture : public benchmark::Fixture {
+class SpdlogSyncFixture : public benchmark::Fixture {
 public:
-	SpdlogBasicFixture()
+	SpdlogSyncFixture()
 	{
 		GenLogMsgArray(10000, log_msgs);
 	}
@@ -49,7 +51,7 @@ public:
 	std::vector<LogMsg> log_msgs;
 };
 
-BENCHMARK_DEFINE_F(SpdlogBasicFixture, basic)(benchmark::State &state)
+BENCHMARK_DEFINE_F(SpdlogSyncFixture, sync)(benchmark::State &state)
 {
 	static thread_local int idx = 0;
 	const int nfuncs = sizeof(log_funcs) / sizeof(log_funcs[0]);
@@ -58,30 +60,46 @@ BENCHMARK_DEFINE_F(SpdlogBasicFixture, basic)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
-BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)
+
+// min time
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)->Threads(1)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)->Threads(2)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
+	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
+				  (std::thread::hardware_concurrency() / 2) :
+				  1)
+	->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
+	->Threads(std::thread::hardware_concurrency() - 1 > 0 ?
+				  (std::thread::hardware_concurrency() - 1) :
+				  1)
+	->MinTime(MIN_TIME);
+
+// iteration * repeat
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
 	->Threads(1)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
 	->Threads(8)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
 	->Threads(16)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
 
-BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
 				  1)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
 	->Threads(std::thread::hardware_concurrency())
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);
-BENCHMARK_REGISTER_F(SpdlogBasicFixture, basic)
+BENCHMARK_REGISTER_F(SpdlogSyncFixture, sync)
 	->Threads(std::thread::hardware_concurrency() * 2)
 	->Iterations(ITER_COUNT)
 	->Repetitions(REPEAT_COUNT);

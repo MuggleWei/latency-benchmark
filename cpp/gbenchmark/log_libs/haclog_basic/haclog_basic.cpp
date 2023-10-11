@@ -11,6 +11,8 @@
 #define ITER_COUNT 10000
 #define REPEAT_COUNT 5
 
+#define MIN_TIME 3.0
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                  \
@@ -42,7 +44,7 @@ public:
 									 HACLOG_LEVEL_DEBUG);
 			haclog_context_add_handler((haclog_handler_t *)&file_handler);
 
-			haclog_context_set_bytes_buf_size(8 * 1024 * 1024);
+			haclog_context_set_bytes_buf_size(4 * 1024 * 1024);
 
 			haclog_backend_run();
 			HACLOG_INFO("init success");
@@ -69,6 +71,22 @@ BENCHMARK_DEFINE_F(HaclogBasicFixture, basic)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
+
+// min time
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(1)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)->Threads(2)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
+	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
+				  (std::thread::hardware_concurrency() / 2) :
+				  1)
+	->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
+	->Threads(std::thread::hardware_concurrency() - 1 > 0 ?
+				  (std::thread::hardware_concurrency() - 1) :
+				  1)
+	->MinTime(MIN_TIME);
+
+// iteration * repeat
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads(1)
 	->Iterations(ITER_COUNT)

@@ -10,6 +10,8 @@
 #define ITER_COUNT 10000
 #define REPEAT_COUNT 5
 
+#define MIN_TIME 3.0
+
 std::once_flag init_flag;
 
 #define LOG_FUNC(num)                                                \
@@ -59,6 +61,22 @@ BENCHMARK_DEFINE_F(SpdlogAsyncFixture, async)(benchmark::State &state)
 		log_funcs[idx](log_msgs[idx]);
 	}
 }
+
+// min time
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(1)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)->Threads(2)->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
+				  (std::thread::hardware_concurrency() / 2) :
+				  1)
+	->MinTime(MIN_TIME);
+BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
+	->Threads(std::thread::hardware_concurrency() - 1 > 0 ?
+				  (std::thread::hardware_concurrency() - 1) :
+				  1)
+	->MinTime(MIN_TIME);
+
+// iteration * repeat
 BENCHMARK_REGISTER_F(SpdlogAsyncFixture, async)
 	->Threads(1)
 	->Iterations(ITER_COUNT)
