@@ -8,7 +8,8 @@
 #include "log_msg.h"
 #include "haclog/haclog.h"
 
-#define ITER_COUNT 20000
+#define ITER_COUNT 10000
+#define REPEAT_COUNT 5
 
 std::once_flag init_flag;
 
@@ -70,24 +71,30 @@ BENCHMARK_DEFINE_F(HaclogBasicFixture, basic)(benchmark::State &state)
 }
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads(1)
-	->Iterations(ITER_COUNT);
+	->Iterations(ITER_COUNT)
+	->Repetitions(REPEAT_COUNT);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads(8)
-	->Iterations(ITER_COUNT);
+	->Iterations(ITER_COUNT)
+	->Repetitions(REPEAT_COUNT);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads(16)
-	->Iterations(ITER_COUNT);
+	->Iterations(ITER_COUNT)
+	->Repetitions(REPEAT_COUNT);
 
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads((std::thread::hardware_concurrency() / 2) > 0 ?
 				  (std::thread::hardware_concurrency() / 2) :
 				  1)
-	->Iterations(ITER_COUNT);
+	->Iterations(ITER_COUNT)
+	->Repetitions(REPEAT_COUNT);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads(std::thread::hardware_concurrency())
-	->Iterations(ITER_COUNT);
+	->Iterations(ITER_COUNT)
+	->Repetitions(REPEAT_COUNT);
 BENCHMARK_REGISTER_F(HaclogBasicFixture, basic)
 	->Threads(std::thread::hardware_concurrency() * 2)
-	->Iterations(ITER_COUNT);
+	->Iterations(ITER_COUNT)
+	->Repetitions(REPEAT_COUNT);
 
 BENCHMARK_MAIN();
