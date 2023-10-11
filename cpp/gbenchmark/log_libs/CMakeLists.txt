@@ -1,7 +1,11 @@
 # options
 set(benchmark_mugglec_log ON CACHE BOOL "generate mugglec log benchmark")
 set(benchmark_spdlog ON CACHE BOOL "generate spdlog benchmark")
-set(benchmark_nanolog ON CACHE BOOL "generate nanolog benchmark")
+if (WIN32)
+	set(benchmark_nanolog OFF CACHE BOOL "generate nanolog benchmark")
+else()
+	set(benchmark_nanolog ON CACHE BOOL "generate nanolog benchmark")
+endif()
 set(benchmark_haclog ON CACHE BOOL "generate haclog benchmark")
 
 # log message
@@ -170,7 +174,7 @@ if (benchmark_haclog)
 	FetchContent_Declare(
 		haclog
 		GIT_REPOSITORY https://github.com/MuggleWei/haclog.git
-		GIT_TAG "0122636b9fe8bd38b53219773121fb676a7189da"
+		GIT_TAG "v0.0.1-alpha.2"
 		GIT_SHALLOW TRUE
 		GIT_PROGRESS TRUE
 		)
