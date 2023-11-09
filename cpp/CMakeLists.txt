@@ -31,50 +31,11 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################
-# options
-################################
-
-option(BUILD_SANITIZER "Compile mugglec with sanitizer" OFF)
-
-################################
 # deps
 ################################
 
 include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
-
-# mugglec
-message("# fetch mugglec")
-
-set(MUGGLE_BUILD_TRACE OFF CACHE BOOL "")
-set(MUGGLE_BUILD_SHARED_LIB ON CACHE BOOL "")
-set(MUGGLE_BUILD_STATIC_PIC ON CACHE BOOL "")
-set(MUGGLE_BUILD_BENCHMARK OFF CACHE BOOL "")
-set(MUGGLE_BUILD_TESTING OFF CACHE BOOL "")
-set(MUGGLE_BUILD_EXAMPLE OFF CACHE BOOL "")
-
-FetchContent_Declare(
-	mugglec
-	GIT_REPOSITORY https://github.com/MuggleWei/mugglec.git
-	GIT_TAG v1.3.2
-	GIT_SHALLOW TRUE
-	GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable(mugglec)
-
-if (BUILD_SANITIZER)
-	if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
-		(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
-		target_compile_options(mugglec PUBLIC
-			-fsanitize=undefined
-			-fsanitize=address
-			-fsanitize=leak)
-		target_link_options(mugglec PUBLIC
-			-fsanitize=undefined
-			-fsanitize=address
-			-fsanitize=leak)
-	endif()
-endif()
 
 # google/benchmark
 message("# fetch google/benchmark")
@@ -95,36 +56,67 @@ FetchContent_MakeAvailable(benchmark)
 # projects
 ################################
 
-# functions
-function(add_gbenchmark name folder)
-	message("add google benchmark ${name} ${folder}")
-	
-	set(name gbenchmark_${name})
+function(add_app name folder)
+	file(GLOB_RECURSE tmp_h ${folder}/*.h)
+	file(GLOB_RECURSE tmp_c ${folder}/*.c)
+	file(GLOB_RECURSE tmp_cpp ${folder}/*.cpp)
+	file(GLOB_RECURSE tmp_cc ${folder}/*.cc)
 
-	file(GLOB tmp_h ${folder}/*.h)
-	file(GLOB tmp_c ${folder}/*.c)
-	file(GLOB tmp_cpp ${folder}/*.cpp)
-	file(GLOB tmp_cc ${folder}/*.cc)
-
-	if (WIN32)
+	if (MSVC OR MINGW)
 		add_executable(${name} ${tmp_h} ${tmp_c} ${tmp_cpp} ${tmp_cc})
 		set_target_properties(${name}
 			PROPERTIES
-			FOLDER "benchmark"
+			FOLDER "example"
 			VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
 		)
 	else()
 		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
-	endif(WIN32)
-	add_dependencies(${name} benchmark)
-	target_link_libraries(${name} benchmark)
-	target_include_directories(${name} PRIVATE
-		${FETCHCONTENT_BASE_DIR}/benchmark-src
-	)
+		if (APPLE)
+			set_target_properties(${name}
+				PROPERTIES
+				INSTALL_RPATH "@executable_path/../lib"
+			)
+		elseif (UNIX)
+			set_target_properties(${name}
+				PROPERTIES
+				INSTALL_RPATH "\$ORIGIN/../lib"
+			)
+		endif()
+	endif(MSVC OR MINGW)
+	target_include_directories(${name} PUBLIC ${folder})
+
+	if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR
+		(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+		target_compile_options(${name} PUBLIC -save-temps=obj)
+	endif()
 endfunction()
 
-# google benchmark - std
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/gbenchmark/std)
+function(add_gbenchmark name folder)
+	message("add google benchmark ${name} ${folder}")
+	set(name gbenchmark_${name})
+	add_app(${name} ${folder})
+	add_dependencies(${name} benchmark)
+	target_link_libraries(${name} benchmark)
+endfunction()
 
-# google benchmark - log
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/gbenchmark/log_libs)
+function(add_benchmark name folder)
+	message("add benchmark ${name} ${folder}")
+	set(name benchmark_${name})
+	add_app(${name} ${folder})
+endfunction()
+
+set(gbenchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/gbenchmark)
+FILE(GLOB subdirs RELATIVE ${gbenchmark_root_dir} ${gbenchmark_root_dir}/*)
+FOREACH(subdir ${subdirs})
+	IF(IS_DIRECTORY ${gbenchmark_root_dir}/${subdir})
+		add_gbenchmark(${subdir} ${gbenchmark_root_dir}/${subdir})
+	ENDIF()
+ENDFOREACH()
+
+set(benchmark_root_dir ${CMAKE_CURRENT_LIST_DIR}/benchmark)
+FILE(GLOB subdirs RELATIVE ${benchmark_root_dir} ${benchmark_root_dir}/*)
+FOREACH(subdir ${subdirs})
+	IF(IS_DIRECTORY ${benchmark_root_dir}/${subdir})
+		add_benchmark(${subdir} ${benchmark_root_dir}/${subdir})
+	ENDIF()
+ENDFOREACH()
