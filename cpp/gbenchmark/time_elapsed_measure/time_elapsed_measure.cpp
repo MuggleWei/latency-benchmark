@@ -64,9 +64,17 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyDouble)
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyInt)
 (benchmark::State &state)
 {
+	// make sure my duration type is the same as default, so it's don't need to 
+	// real convert duration type in runtime
+	typedef std::chrono::duration<int64_t, std::nano> steady_int64_nano_duration;
+	static_assert(std::is_same<steady_int64_nano_duration,
+							   std::chrono::steady_clock::duration>::value);
+
 	for (auto _ : state) {
 		auto cur = std::chrono::steady_clock::now();
-		std::chrono::duration<int64_t, std::nano> diff = cur - steady_start;
+		steady_int64_nano_duration diff =
+			std::chrono::duration_cast<steady_int64_nano_duration>(
+				cur - steady_start);
 		int64_arr[idx++] = diff.count();
 	}
 }
@@ -84,10 +92,19 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, HighResolutionDouble)
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, HighResolutionInt)
 (benchmark::State &state)
 {
+	// make sure my duration type is the same as default, so it's don't need to 
+	// real convert duration type in runtime
+	typedef std::chrono::duration<int64_t, std::nano>
+		high_resolution_int64_nano_duration;
+	static_assert(
+		std::is_same<high_resolution_int64_nano_duration,
+					 std::chrono::high_resolution_clock::duration>::value);
+
 	for (auto _ : state) {
 		auto cur = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<int64_t, std::nano> diff =
-			cur - high_resolution_start;
+		high_resolution_int64_nano_duration diff =
+			std::chrono::duration_cast<high_resolution_int64_nano_duration>(
+				cur - high_resolution_start);
 		int64_arr[idx++] = diff.count();
 	}
 }
@@ -174,8 +191,7 @@ BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_PROCESS_CPUTIME)
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
 	->Iterations(MEASURE_CNT);
 
-BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, rdtsc)
-	->Iterations(MEASURE_CNT);
+BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, rdtsc)->Iterations(MEASURE_CNT);
 
 #endif
 
