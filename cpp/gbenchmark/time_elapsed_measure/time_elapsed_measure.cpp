@@ -15,6 +15,11 @@ public:
 		steady_start = std::chrono::steady_clock::now();
 		high_resolution_start = std::chrono::high_resolution_clock::now();
 		timespec_get(&ts_start, TIME_UTC);
+#ifdef __linux__
+		clock_gettime(CLOCK_MONOTONIC, &monotonic_clock_start);
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_clock_start);
+		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_clock_start);
+#endif
 	}
 
 	virtual void TearDown(const benchmark::State &) override
@@ -31,6 +36,9 @@ public:
 	std::chrono::steady_clock::time_point steady_start;
 	std::chrono::high_resolution_clock::time_point high_resolution_start;
 	struct timespec ts_start;
+	struct timespec monotonic_clock_start;
+	struct timespec process_clock_start;
+	struct timespec thread_clock_start;
 };
 
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyDouble)
@@ -85,6 +93,46 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, timespec_int)
 	}
 }
 
+#ifdef __linux__
+
+BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, clock_gettime_MONOTONIC)
+(benchmark::State &state)
+{
+	for (auto _ : state) {
+		struct timespec cur;
+		clock_gettime(CLOCK_MONOTONIC, &cur);
+		int64_arr[idx++] =
+			(cur.tv_sec - monotonic_clock_start.tv_sec) * 1000000000 +
+			cur.tv_nsec - monotonic_clock_start.tv_nsec;
+	}
+}
+
+BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, clock_gettime_PROCESS_CPUTIME)
+(benchmark::State &state)
+{
+	for (auto _ : state) {
+		struct timespec cur;
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cur);
+		int64_arr[idx++] =
+			(cur.tv_sec - process_clock_start.tv_sec) * 1000000000 +
+			cur.tv_nsec - process_clock_start.tv_nsec;
+	}
+}
+
+BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
+(benchmark::State &state)
+{
+	for (auto _ : state) {
+		struct timespec cur;
+		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cur);
+		int64_arr[idx++] =
+			(cur.tv_sec - thread_clock_start.tv_sec) * 1000000000 +
+			cur.tv_nsec - thread_clock_start.tv_nsec;
+	}
+}
+
+#endif
+
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, SteadyDouble)
 	->Iterations(MEASURE_CNT);
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, SteadyInt)
@@ -97,5 +145,16 @@ BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, HighResolutionInt)
 
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, timespec_int)
 	->Iterations(MEASURE_CNT);
+
+#ifdef __linux__
+
+BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_MONOTONIC)
+	->Iterations(MEASURE_CNT);
+BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_PROCESS_CPUTIME)
+	->Iterations(MEASURE_CNT);
+BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
+	->Iterations(MEASURE_CNT);
+
+#endif
 
 BENCHMARK_MAIN();
