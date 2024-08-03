@@ -2,7 +2,11 @@
 #include <stdint.h>
 #include "benchmark/benchmark.h"
 
-#define MEASURE_CNT 1000
+#if __linux__
+	#include <x86intrin.h>
+#endif
+
+#define MEASURE_CNT 100000
 
 class TimeElapsedMeasureFixture : public benchmark::Fixture {
 public:
@@ -10,6 +14,7 @@ public:
 	{
 		double_arr = (double *)malloc(sizeof(double) * MEASURE_CNT);
 		int64_arr = (int64_t *)malloc(sizeof(int64_t) * MEASURE_CNT);
+		uint64_arr = (uint64_t *)malloc(sizeof(uint64_t) * MEASURE_CNT);
 		idx = 0;
 
 		steady_start = std::chrono::steady_clock::now();
@@ -19,6 +24,8 @@ public:
 		clock_gettime(CLOCK_MONOTONIC, &monotonic_clock_start);
 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_clock_start);
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_clock_start);
+
+		rdtsc_start = __rdtsc();
 #endif
 	}
 
@@ -26,11 +33,13 @@ public:
 	{
 		free(double_arr);
 		free(int64_arr);
+		free(uint64_arr);
 	}
 
 public:
 	double *double_arr;
 	int64_t *int64_arr;
+	uint64_t *uint64_arr;
 	uint32_t idx;
 
 	std::chrono::steady_clock::time_point steady_start;
@@ -39,6 +48,7 @@ public:
 	struct timespec monotonic_clock_start;
 	struct timespec process_clock_start;
 	struct timespec thread_clock_start;
+	uint64_t rdtsc_start;
 };
 
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyDouble)
@@ -131,6 +141,15 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
 	}
 }
 
+BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, rdtsc)
+(benchmark::State &state)
+{
+	for (auto _ : state) {
+		uint64_t cur = __rdtsc();
+		uint64_arr[idx++] = cur - rdtsc_start;
+	}
+}
+
 #endif
 
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, SteadyDouble)
@@ -153,6 +172,9 @@ BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_MONOTONIC)
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_PROCESS_CPUTIME)
 	->Iterations(MEASURE_CNT);
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
+	->Iterations(MEASURE_CNT);
+
+BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, rdtsc)
 	->Iterations(MEASURE_CNT);
 
 #endif
