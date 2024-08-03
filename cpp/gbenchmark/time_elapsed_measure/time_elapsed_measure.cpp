@@ -1,5 +1,4 @@
 #include <chrono>
-#include <thread>
 #include <stdint.h>
 #include "benchmark/benchmark.h"
 
@@ -15,6 +14,7 @@ public:
 
 		steady_start = std::chrono::steady_clock::now();
 		high_resolution_start = std::chrono::high_resolution_clock::now();
+		timespec_get(&ts_start, TIME_UTC);
 	}
 
 	virtual void TearDown(const benchmark::State &) override
@@ -30,6 +30,7 @@ public:
 
 	std::chrono::steady_clock::time_point steady_start;
 	std::chrono::high_resolution_clock::time_point high_resolution_start;
+	struct timespec ts_start;
 };
 
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyDouble)
@@ -73,6 +74,17 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, HighResolutionInt)
 	}
 }
 
+BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, timespec_int)
+(benchmark::State &state)
+{
+	for (auto _ : state) {
+		struct timespec cur;
+		timespec_get(&cur, TIME_UTC);
+		int64_arr[idx++] = (cur.tv_sec - ts_start.tv_sec) * 1000000000 +
+						   cur.tv_nsec - ts_start.tv_nsec;
+	}
+}
+
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, SteadyDouble)
 	->Iterations(MEASURE_CNT);
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, SteadyInt)
@@ -81,6 +93,9 @@ BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, SteadyInt)
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, HighResolutionDouble)
 	->Iterations(MEASURE_CNT);
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, HighResolutionInt)
+	->Iterations(MEASURE_CNT);
+
+BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, timespec_int)
 	->Iterations(MEASURE_CNT);
 
 BENCHMARK_MAIN();
