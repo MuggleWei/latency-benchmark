@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include "benchmark/benchmark.h"
 
-#if __linux__
+#if __linux__ && defined(__x86_64__)
 	#include <x86intrin.h>
 #endif
 
@@ -25,7 +25,10 @@ public:
 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &process_clock_start);
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_clock_start);
 
+	#ifdef __x86_64__
 		rdtsc_start = __rdtsc();
+	#endif // __x86_64__
+
 #endif
 	}
 
@@ -64,7 +67,7 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyDouble)
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, SteadyInt)
 (benchmark::State &state)
 {
-	// make sure my duration type is the same as default, so it's don't need to 
+	// make sure my duration type is the same as default, so it's don't need to
 	// real convert duration type in runtime
 	typedef std::chrono::duration<int64_t, std::nano> steady_int64_nano_duration;
 	static_assert(std::is_same<steady_int64_nano_duration,
@@ -92,7 +95,7 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, HighResolutionDouble)
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, HighResolutionInt)
 (benchmark::State &state)
 {
-	// make sure my duration type is the same as default, so it's don't need to 
+	// make sure my duration type is the same as default, so it's don't need to
 	// real convert duration type in runtime
 	typedef std::chrono::duration<int64_t, std::nano>
 		high_resolution_int64_nano_duration;
@@ -158,6 +161,8 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
 	}
 }
 
+	#ifdef __x86_64__
+
 BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, rdtsc)
 (benchmark::State &state)
 {
@@ -166,6 +171,8 @@ BENCHMARK_DEFINE_F(TimeElapsedMeasureFixture, rdtsc)
 		uint64_arr[idx++] = cur - rdtsc_start;
 	}
 }
+
+	#endif // __x86_64__
 
 #endif
 
@@ -191,7 +198,11 @@ BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_PROCESS_CPUTIME)
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, clock_gettime_THREAD_CPUTIME)
 	->Iterations(MEASURE_CNT);
 
+	#ifdef __x86_64__
+
 BENCHMARK_REGISTER_F(TimeElapsedMeasureFixture, rdtsc)->Iterations(MEASURE_CNT);
+
+	#endif // __x86_64__
 
 #endif
 
