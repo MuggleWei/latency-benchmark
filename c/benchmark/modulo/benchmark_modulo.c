@@ -11,7 +11,7 @@ void funcmodulo(void *args, uint64_t idx)
 
 void funcIDX_IN_POW_OF_2_RING(void *args, uint64_t idx)
 {
-	*(uint64_t*)args = IDX_IN_POW_OF_2_RING(idx, cap);
+	*(uint64_t*)args = MUGGLE_IDX_IN_POW_OF_2_RING(idx, cap);
 }
 
 #define IDX_IN_POW_OF_2_RING_CAP_SUB_1(idx, cap_sub_1) ((idx) & (cap_sub_1))
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	muggle_benchmark_config_parse_cli(&config, argc, argv);
 	muggle_benchmark_config_output(&config);
 
-	cap = next_pow_of_2(config.record_per_round);
+	cap = muggle_next_pow_of_2(config.record_per_round);
 	cap_sub_1 = cap - 1;
 
 	MUGGLE_LOG_INFO("--------------------------------------------------------");

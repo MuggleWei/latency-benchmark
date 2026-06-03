@@ -38,7 +38,7 @@ public:
 
 	void AsignInLock()
 	{
-		int idx = IDX_IN_POW_OF_2_RING(cursor, RING_CAPACITY);
+		int idx = MUGGLE_IDX_IN_POW_OF_2_RING(cursor, RING_CAPACITY);
 		ring[idx].data = &datas[idx];
 		muggle_atomic_store(&cursor, cursor + 1, muggle_memory_order_release);
 	}
@@ -117,7 +117,7 @@ BENCHMARK_DEFINE_F(ThreadTransWriteFixture, CAS)(benchmark::State &state)
 	{
 		muggle_atomic_int pos = muggle_atomic_fetch_add(&next, 1, muggle_memory_order_relaxed);
 
-		int idx = IDX_IN_POW_OF_2_RING(pos, RING_CAPACITY);
+		int idx = MUGGLE_IDX_IN_POW_OF_2_RING(pos, RING_CAPACITY);
 		ring[idx].data = &datas[idx];
 
 		muggle_atomic_int cur_pos = pos;
